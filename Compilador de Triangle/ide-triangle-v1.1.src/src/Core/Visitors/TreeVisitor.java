@@ -26,6 +26,7 @@ import Triangle.AbstractSyntaxTrees.EmptyCommand;
 import Triangle.AbstractSyntaxTrees.EmptyExpression;
 import Triangle.AbstractSyntaxTrees.EmptyFormalParameterSequence;
 import Triangle.AbstractSyntaxTrees.ErrorTypeDenoter;
+import Triangle.AbstractSyntaxTrees.ForCommand;
 import Triangle.AbstractSyntaxTrees.FuncActualParameter;
 import Triangle.AbstractSyntaxTrees.FuncDeclaration;
 import Triangle.AbstractSyntaxTrees.FuncFormalParameter;
@@ -100,21 +101,26 @@ public class TreeVisitor implements Visitor {
         return(createNullary("Empty Command"));
     }
     
-    public Object visitIfCommand(IfCommand ast, Object obj) {
+    public Object visitIfCommand(IfCommand ast, Object o) {
         return(createTernary("If Command", ast.E, ast.C1, ast.C2));
     }
     
-    public Object visitLetCommand(LetCommand ast, Object obj) {
+    public Object visitLetCommand(LetCommand ast, Object o) {
         return(createBinary("Let Command", ast.D, ast.C));
     }
     
-    public Object visitSequentialCommand(SequentialCommand ast, Object obj) {
+    public Object visitSequentialCommand(SequentialCommand ast, Object o) {
         return(createBinary("Sequential Command", ast.C1, ast.C2));
     }
     
-    public Object visitWhileCommand(WhileCommand ast, Object obj) {
+    public Object visitWhileCommand(WhileCommand ast, Object o) {
         return(createBinary("While Command", ast.E, ast.C));
     }
+    
+    public Object visitForCommand(ForCommand ast, Object o) {
+        return(createQuaternary("For Command", ast.V, ast.E1, ast.E2, ast.C));
+    }
+    
     // </editor-fold>
     
     // <editor-fold defaultstate="collapsed" desc=" Expressions ">

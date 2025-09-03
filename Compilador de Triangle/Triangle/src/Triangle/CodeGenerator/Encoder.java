@@ -48,6 +48,7 @@ import Triangle.AbstractSyntaxTrees.EmptyCommand;
 import Triangle.AbstractSyntaxTrees.EmptyExpression;
 import Triangle.AbstractSyntaxTrees.EmptyFormalParameterSequence;
 import Triangle.AbstractSyntaxTrees.ErrorTypeDenoter;
+import Triangle.AbstractSyntaxTrees.ForCommand;
 import Triangle.AbstractSyntaxTrees.FuncActualParameter;
 import Triangle.AbstractSyntaxTrees.FuncDeclaration;
 import Triangle.AbstractSyntaxTrees.FuncFormalParameter;
@@ -157,6 +158,47 @@ public final class Encoder implements Visitor {
     patch(jumpAddr, nextInstrAddr);
     ast.E.visit(this, frame);
     emit(Machine.JUMPIFop, Machine.trueRep, Machine.CBr, loopAddr);
+    return null;
+  }
+
+  // Genera código TAM para un comando FOR (to/downto): asigna valor inicial, ejecuta bucle,
+  // actualiza variable de control y verifica condición de salida
+  public Object visitForCommand(ForCommand ast, Object o) {
+    Frame frame = (Frame) o;
+    int jumpAddr, loopAddr;
+
+    ast.E1.visit(this, frame);
+    encodeStore(ast.V, frame, Machine.integerSize);
+    
+    jumpAddr = nextInstrAddr;
+    emit(Machine.JUMPop, 0, Machine.CBr, 0);
+    
+
+    loopAddr = nextInstrAddr;
+    ast.C.visit(this, frame);
+    
+    // Incrementar/decrementar la variable de control
+    encodeFetch(ast.V, frame, Machine.integerSize);
+    emit(Machine.LOADLop, 0, 0, 1); // Cargar constante 1
+    if (ast.isDowntoLoop) {
+      emit(Machine.CALLop, 0, Machine.PBr, Machine.subDisplacement);  // Restar
+    } else {
+      emit(Machine.CALLop, 0, Machine.PBr, Machine.addDisplacement);  // Sumar
+    }
+    encodeStore(ast.V, frame, Machine.integerSize);
+    
+    // Test de condición: comparar variable de control con E2
+    patch(jumpAddr, nextInstrAddr);
+    encodeFetch(ast.V, frame, Machine.integerSize);
+    ast.E2.visit(this, frame);
+    
+    if (ast.isDowntoLoop) {
+      emit(Machine.CALLop, 0, Machine.PBr, Machine.geDisplacement); // >=
+    } else {
+      emit(Machine.CALLop, 0, Machine.PBr, Machine.leDisplacement); // <=
+    }
+    emit(Machine.JUMPIFop, Machine.trueRep, Machine.CBr, loopAddr);
+    
     return null;
   }
   

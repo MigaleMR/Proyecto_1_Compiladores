@@ -20,6 +20,8 @@ public interface Visitor {
   public abstract Object visitAssignCommand(AssignCommand ast, Object o);
   public abstract Object visitCallCommand(CallCommand ast, Object o);
   public abstract Object visitEmptyCommand(EmptyCommand ast, Object o);
+  // ForCommand
+  public abstract Object visitForCommand(ForCommand ast, Object o);
   public abstract Object visitIfCommand(IfCommand ast, Object o);
   public abstract Object visitLetCommand(LetCommand ast, Object o);
   public abstract Object visitSequentialCommand(SequentialCommand ast, Object o);

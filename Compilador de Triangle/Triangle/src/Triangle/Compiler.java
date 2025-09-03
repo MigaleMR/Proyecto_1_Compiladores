@@ -66,7 +66,6 @@ public class Compiler {
 
         System.out.println("********** " +
                            "Triangle Compiler (Java Version 2.1)" +
-                           " Hola Mundo! " +
                            " **********");
 
         System.out.println("Syntactic Analysis ...");

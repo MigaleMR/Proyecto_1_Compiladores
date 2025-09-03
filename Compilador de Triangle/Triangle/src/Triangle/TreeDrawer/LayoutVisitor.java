@@ -38,6 +38,7 @@ import Triangle.AbstractSyntaxTrees.EmptyCommand;
 import Triangle.AbstractSyntaxTrees.EmptyExpression;
 import Triangle.AbstractSyntaxTrees.EmptyFormalParameterSequence;
 import Triangle.AbstractSyntaxTrees.ErrorTypeDenoter;
+import Triangle.AbstractSyntaxTrees.ForCommand;
 import Triangle.AbstractSyntaxTrees.FuncActualParameter;
 import Triangle.AbstractSyntaxTrees.FuncDeclaration;
 import Triangle.AbstractSyntaxTrees.FuncFormalParameter;
@@ -119,6 +120,15 @@ public class LayoutVisitor implements Visitor {
 
   public Object visitWhileCommand(WhileCommand ast, Object obj) {
     return layoutBinary("WhileCom.", ast.E, ast.C);
+  }
+
+  // Layout visual del comando for en el árbol sintáctico  
+  // Crea un layout para mostrar la estructura del for con sus componentes
+  public Object visitForCommand(ForCommand ast, Object obj) {
+
+    String forType = ast.isDowntoLoop ? "ForDownto" : "ForTo";
+    DrawingTree dt = layoutQuaternary(forType, ast.V, ast.E1, ast.E2, ast.C);
+    return dt;
   }
   
   // Expressions

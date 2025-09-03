@@ -271,6 +271,33 @@ public class Parser {
       }
       break;
 
+    // Parsea un comando FOR con sintaxis: for variable := expresion1 to/downto expresion2 do comando
+    // Detecta si es un bucle ascendente (to) o descendente (downto) y crea el AST correspondiente
+    case Token.FOR:
+      {
+        acceptIt();
+        Vname vAST = parseVname();
+        accept(Token.BECOMES);
+        Expression e1AST = parseExpression();
+        
+        boolean isDownto = false;
+        if (currentToken.kind == Token.TO) {
+          acceptIt();
+        } else if (currentToken.kind == Token.DOWNTO) {
+          acceptIt();
+          isDownto = true;
+        } else {
+          syntacticError("\"to\" or \"downto\" expected here", currentToken.spelling);
+        }
+        
+        Expression e2AST = parseExpression();
+        accept(Token.DO);
+        Command cAST = parseSingleCommand();
+        finish(commandPos);
+        commandAST = new ForCommand(vAST, e1AST, e2AST, isDownto, cAST, commandPos);
+      }
+      break;
+
     case Token.SEMICOLON:
     case Token.END:
     case Token.ELSE:

@@ -88,6 +88,28 @@ public final class Checker implements Visitor {
     ast.C.visit(this, null);
     return null;
   }
+
+  // COMENTARIO: Análisis contextual del comando for - verifica tipos de las expresiones
+  public Object visitForCommand(ForCommand ast, Object o) {
+    // Verificar que las expresiones inicial y final sean de tipo entero
+    TypeDenoter e1Type = (TypeDenoter) ast.E1.visit(this, null);
+    TypeDenoter e2Type = (TypeDenoter) ast.E2.visit(this, null);
+    
+    if (! e1Type.equals(StdEnvironment.integerType))
+      reporter.reportError("Integer expression expected here", "", ast.E1.position);
+    if (! e2Type.equals(StdEnvironment.integerType))
+      reporter.reportError("Integer expression expected here", "", ast.E2.position);
+    
+    // Verificar que la variable de control sea válida y de tipo entero
+    TypeDenoter vType = (TypeDenoter) ast.V.visit(this, null);
+    if (! vType.equals(StdEnvironment.integerType))
+      reporter.reportError("Integer variable expected here", "", ast.V.position);
+    
+    // Analizar el cuerpo del bucle
+    ast.C.visit(this, null);
+    
+    return null;
+  }
   
   // Expressions
 

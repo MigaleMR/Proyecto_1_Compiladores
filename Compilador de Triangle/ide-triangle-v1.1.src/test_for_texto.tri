@@ -1,0 +1,19 @@
+let
+ var j : Integer
+in
+ begin
+  put('N');
+  put('u');
+  put('m');
+  put('e');
+  put('r');
+  put('o');
+  put('s');
+  put(':');
+  put(' ');
+  for j := 5 to 8 do
+   begin
+    putint(j);
+    put(' ')
+   end
+ end
