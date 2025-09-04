@@ -88,27 +88,36 @@ public final class Checker implements Visitor {
     ast.C.visit(this, null);
     return null;
   }
-
-  // COMENTARIO: Análisis contextual del comando for - verifica tipos de las expresiones
-  public Object visitForCommand(ForCommand ast, Object o) {
-    // Verificar que las expresiones inicial y final sean de tipo entero
-    TypeDenoter e1Type = (TypeDenoter) ast.E1.visit(this, null);
-    TypeDenoter e2Type = (TypeDenoter) ast.E2.visit(this, null);
-    
-    if (! e1Type.equals(StdEnvironment.integerType))
-      reporter.reportError("Integer expression expected here", "", ast.E1.position);
-    if (! e2Type.equals(StdEnvironment.integerType))
-      reporter.reportError("Integer expression expected here", "", ast.E2.position);
-    
-    // Verificar que la variable de control sea válida y de tipo entero
-    TypeDenoter vType = (TypeDenoter) ast.V.visit(this, null);
-    if (! vType.equals(StdEnvironment.integerType))
-      reporter.reportError("Integer variable expected here", "", ast.V.position);
-    
-    // Analizar el cuerpo del bucle
+  
+  // Verificación semántica para comando FOR: valida tipos de variable y expresiones de rango
+  //For command
+  public Object visitForCommand(ForCommand ast, Object o) { //For command
+      TypeDenoter vType = (TypeDenoter) ast.V.visit(this, null);
+      if (! ast.V.variable)
+        reporter.reportError("identifier is not a variable", "", ast.V.position);
+      else if(! (vType instanceof IntTypeDenoter || vType instanceof CharTypeDenoter))
+        reporter.reportError("Expected an variable of type integer or character", "", ast.V.position);
+      
+      TypeDenoter e1Type = (TypeDenoter) ast.E1.visit(this, null);
+      if (! e1Type.equals(vType))
+          reporter.reportError ("Integer or character expected in expression one", "", ast.E1.position);
+      
+      TypeDenoter e2Type = (TypeDenoter) ast.E2.visit(this, null);
+      if (! e2Type.equals(vType))
+          reporter.reportError ("Integer or character expected in expression two", "", ast.E2.position);
+      
+      ast.C.visit(this, null);
+      return null;
+  }
+  
+  // Verificación semántica para comando REPEAT: valida que la condición sea booleana
+  //Repeat command
+  public Object visitRepeatCommand(RepeatCommand ast, Object o) {
+      TypeDenoter eType = (TypeDenoter) ast.E.visit(this, null);
+      if (! eType.equals(StdEnvironment.booleanType))
+      reporter.reportError("Boolean expression expected here", "", ast.E.position);
     ast.C.visit(this, null);
-    
-    return null;
+      return null;
   }
   
   // Expressions

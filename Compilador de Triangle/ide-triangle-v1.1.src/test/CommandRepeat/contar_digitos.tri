@@ -1,0 +1,17 @@
+let
+  var digitos: Integer;
+  var numero: Integer;
+  var temp: Integer
+in
+  begin
+    numero := 12345;
+    temp := numero;
+    digitos := 0;
+    repeat
+      begin
+        temp := temp / 10;
+        digitos := digitos + 1
+      end
+    until temp = 0;
+    putint(digitos)
+  end

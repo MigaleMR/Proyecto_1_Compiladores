@@ -61,6 +61,7 @@ import Triangle.AbstractSyntaxTrees.ProcDeclaration;
 import Triangle.AbstractSyntaxTrees.ProcFormalParameter;
 import Triangle.AbstractSyntaxTrees.Program;
 import Triangle.AbstractSyntaxTrees.RecordExpression;
+import Triangle.AbstractSyntaxTrees.RepeatCommand;
 import Triangle.AbstractSyntaxTrees.RecordTypeDenoter;
 import Triangle.AbstractSyntaxTrees.SequentialCommand;
 import Triangle.AbstractSyntaxTrees.SequentialDeclaration;
@@ -121,14 +122,17 @@ public class LayoutVisitor implements Visitor {
   public Object visitWhileCommand(WhileCommand ast, Object obj) {
     return layoutBinary("WhileCom.", ast.E, ast.C);
   }
-
-  // Layout visual del comando for en el árbol sintáctico  
-  // Crea un layout para mostrar la estructura del for con sus componentes
+  
+  // Layout para visualización del árbol sintáctico de comando FOR con sus cuatro componentes
+  //For command
   public Object visitForCommand(ForCommand ast, Object obj) {
-
-    String forType = ast.isDowntoLoop ? "ForDownto" : "ForTo";
-    DrawingTree dt = layoutQuaternary(forType, ast.V, ast.E1, ast.E2, ast.C);
-    return dt;
+      return layoutQuaternary("ForCom.",ast.V,ast.E1,ast.E2,ast.C);
+  }
+  
+  // Layout para visualización del árbol sintáctico de comando REPEAT con comando y condición
+  //Repeat command
+  public Object visitRepeatCommand(RepeatCommand ast, Object obj) {
+      return layoutBinary("RepeatCom.",ast.C, ast.E);
   }
   
   // Expressions

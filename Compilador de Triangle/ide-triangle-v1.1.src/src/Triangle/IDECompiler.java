@@ -1,144 +1,102 @@
 /*
- * @(#)IDECompiler.java                      2.1 2003/10/07
+ * IDE-Triangle v1.0
+ * Compiler.java 
  *
- * Copyright (C) 1999, 2003 D.A. Watt and D.F. Brown
- * Dept. of Computing Science, University of Glasgow, Glasgow G12 8QQ Scotland
- * and School of Computer and Math Sciences, The Robert Gordon University,
- * St. Andrew Street, Aberdeen AB25 1HG, Scotland.
- * All rights reserved.
- *
- * This software is provided free for educational use only. It may
- * not be used for commercial purposes without the prior written permission
- * of the authors.
- *
- * Version para curso Compiladores 2025 - IDE version
- *
+ * Version para curso Compiladores 2025
  */
 
 package Triangle;
 
-import Triangle.AbstractSyntaxTrees.Program;
-import Triangle.CodeGenerator.Encoder;
-import Triangle.ContextualAnalyzer.Checker;
-import Triangle.SyntacticAnalyzer.Parser;
-import Triangle.SyntacticAnalyzer.Scanner;
+import Triangle.CodeGenerator.Frame;
+import java.awt.event.ActionListener;
 import Triangle.SyntacticAnalyzer.SourceFile;
-import Triangle.TreeDrawer.Drawer;
+import Triangle.SyntacticAnalyzer.Scanner;
+import Triangle.AbstractSyntaxTrees.Program;
+import Triangle.SyntacticAnalyzer.Parser;
+import Triangle.ContextualAnalyzer.Checker;
+import Triangle.CodeGenerator.Encoder;
 
-/**
- * The compiler driver class for the Triangle IDE.
+
+
+/** 
+ * This is merely a reimplementation of the Triangle.Compiler class. We need
+ * to get to the ASTs in order to draw them in the IDE without modifying the
+ * original Triangle code.
  *
- * @version		2.1 7 Oct 2003
- * @author		Deryck F. Brown
+ * @author Luis Leopoldo Perez <luiperpe@ns.isi.ulatina.ac.cr>
  */
 public class IDECompiler {
 
-    private Scanner scanner;
-    private Parser parser;
-    private Checker checker;
-    private Encoder encoder;
-    private IDEReporter reporter;
-    private Drawer drawer;
-
-    /** The AST representing the source program. */
-    private Program theAST;
-
-    public IDECompiler() {
-        // Constructor for IDE use
-    }
-
+    // <editor-fold defaultstate="collapsed" desc=" Methods ">
     /**
-     * Compile the source program to TAM machine code for IDE (simplified version).
+     * Creates a new instance of IDECompiler.
      *
-     * @param	sourceName	the name of the file containing the source program.
-     * @return	true iff the source program is free of compile-time errors.
+     */
+    public IDECompiler() {
+    }
+    
+    /**
+     * Particularly the same compileProgram method from the Triangle.Compiler
+     * class.
+     * @param sourceName Path to the source file.
+     * @return True if compilation was succesful.
      */
     public boolean compileProgram(String sourceName) {
-        String objectName = sourceName.replace(".tri", ".tam");
-        return compileProgram(sourceName, objectName, false, false);
-    }
-
-    /**
-     * Compile the source program to TAM machine code for IDE.
-     *
-     * @param	sourceName	the name of the file containing the
-     *				source program.
-     * @param	objectName	the name of the file containing the
-     *				object program.
-     * @param	showingAST	true iff the AST is to be displayed after
-     *				contextual analysis.
-     * @param	showingTable	true iff the object description details are to
-     *				be displayed during code generation.
-     * @return	true iff the source program is free of compile-time errors,
-     *          otherwise false.
-     */
-    public boolean compileProgram(String sourceName, String objectName,
-                                  boolean showingAST, boolean showingTable) {
-
         System.out.println("********** " +
-                           "Triangle Compiler (Java Version 2.1)" +
+                           "Triangle Compiler (IDE-Triangle 1.0)" +
                            " **********");
-
+        
         System.out.println("Syntactic Analysis ...");
         SourceFile source = new SourceFile(sourceName);
-
-        if (source == null) {
-            System.out.println("Can't access source file " + sourceName);
-            return false;
-        }
-
-        scanner  = new Scanner(source);
-        reporter = new IDEReporter();
-        parser   = new Parser(scanner, reporter);
-        checker  = new Checker(reporter);
-        encoder  = new Encoder(reporter);
-        drawer   = new Drawer();
-
-        // scanner.enableDebugging();
-        theAST = parser.parseProgram();				// 1st pass
-        if (reporter.numErrors == 0) {
-            System.out.println ("Contextual Analysis ...");
-            checker.check(theAST);				// 2nd pass
-            if (showingAST) {
-                drawer.draw(theAST);
-            }
-            if (reporter.numErrors == 0) {
+        Scanner scanner = new Scanner(source);
+        report = new IDEReporter();
+        Parser parser = new Parser(scanner, report);
+        boolean success = false;
+        
+        rootAST = parser.parseProgram();
+        if (report.numErrors == 0) {
+            System.out.println("Contextual Analysis ...");
+            Checker checker = new Checker(report);
+            checker.check(rootAST);
+            if (report.numErrors == 0) {
                 System.out.println("Code Generation ...");
-                encoder.encodeRun(theAST, showingTable);	// 3rd pass
+                Encoder encoder = new Encoder(report);
+                encoder.encodeRun(rootAST, false);
+                
+                if (report.numErrors == 0) {
+                    encoder.saveObjectProgram(sourceName.replace(".tri", ".tam"));
+                    success = true;
+                }
             }
         }
 
-        boolean successful = (reporter.numErrors == 0);
-        if (successful) {
-            encoder.saveObjectProgram(objectName);
+        if (success)
             System.out.println("Compilation was successful.");
-        } else {
+        else
             System.out.println("Compilation was unsuccessful.");
-        }
-        return successful;
+        
+        return(success);
     }
-
+      
     /**
-     * Get the syntax tree for the IDE.
-     * @return the AST or null if compilation failed
-     */
-    public Program getAST() {
-        return theAST;
-    }
-
-    /**
-     * Get the error reporter for the IDE.
-     * @return the error reporter
-     */
-    public IDEReporter getErrorReporter() {
-        return reporter;
-    }
-
-    /**
-     * Get the position of the first error.
-     * @return the line number of the first error, or -1 if no errors
+     * Returns the line number where the first error is.
+     * @return Line number.
      */
     public int getErrorPosition() {
-        return reporter != null ? reporter.getErrorPosition() : -1;
+        return(report.getFirstErrorPosition());
     }
+        
+    /**
+     * Returns the root Abstract Syntax Tree.
+     * @return Program AST (root).
+     */
+    public Program getAST() {
+        return(rootAST);
+    }
+    // </editor-fold>
+    
+    // <editor-fold defaultstate="collapsed" desc=" Attributes ">
+    private Program rootAST;        // The Root Abstract Syntax Tree.    
+    private IDEReporter report;     // Our ErrorReporter class.
+    // </editor-fold>
 }

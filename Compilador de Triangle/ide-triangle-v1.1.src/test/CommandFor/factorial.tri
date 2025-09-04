@@ -1,0 +1,12 @@
+let
+  var n: Integer;
+  var factorial: Integer;
+  var i: Integer
+in
+  begin
+    n := 7;
+    factorial := 1;
+    for i := n downto 1 do
+      factorial := factorial * i;
+    putint(factorial)
+  end

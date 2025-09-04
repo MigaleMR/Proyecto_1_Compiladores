@@ -1,0 +1,14 @@
+let
+  var numero: Integer;
+  var intentos: Integer
+in
+  begin
+    intentos := 0;
+    repeat
+      begin
+        getint(var numero);
+        intentos := intentos + 1
+      end
+    until numero = 42;
+    putint(intentos)
+  end

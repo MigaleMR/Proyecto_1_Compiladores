@@ -1,47 +1,50 @@
 /*
- * @(#)IDEReporter.java                      2.1 2003/10/07
- *
- * Copyright (C) 1999, 2003 D.A. Watt and D.F. Brown
- * Dept. of Computing Science, University of Glasgow, Glasgow G12 8QQ Scotland
- * and School of Computer and Math Sciences, The Robert Gordon University,
- * St. Andrew Street, Aberdeen AB25 1HG, Scotland.
- * All rights reserved.
- *
- * This software is provided free for educational use only. It may
- * not be used for commercial purposes without the prior written permission
- * of the authors.
- *
- * Version para curso Compiladores 2025 - IDE version
- *
+ * IDE-Triangle v1.0
+ * IDEReporter.java
  */
 
 package Triangle;
-
 import Triangle.SyntacticAnalyzer.SourcePosition;
+import Triangle.*;
 
 /**
- * Error reporter for the Triangle IDE.
+ * Extends the Triangle.ErrorReporter class. Used to get the source lines
+ * where errors are found. 
  *
- * @version		2.1 7 Oct 2003
- * @author		Deryck F. Brown
+ * @author Luis Leopoldo Perez <luiperpe@ns.isi.ulatina.ac.cr>
  */
 public class IDEReporter extends ErrorReporter {
-
-    private int errorLine = -1;
-
+     
+    // <editor-fold defaultstate="collapsed" desc=" Methods ">
+    
+    /** 
+     * Creates a new instance of IDEReporter.
+     */
     public IDEReporter() {
         super();
     }
-
-    @Override
+    
+    /**
+     * Overrides the reportError method, adding the line number to an array.
+     * @param message Error message
+     * @param tokenName Name of the token
+     * @param pos Position in the source file.
+     */
     public void reportError(String message, String tokenName, SourcePosition pos) {
-        super.reportError(message, tokenName, pos);
-        if (errorLine == -1) { // Solo capturar el primer error
-            errorLine = pos.start;
-        }
+        errorPositions[numErrors] = pos.start;
+        super.reportError(message, tokenName, pos);        
     }
-
-    public int getErrorPosition() {
-        return errorLine;
+    
+    /**
+     * Returns the line where the first error is.
+     * @return Line number.
+     */
+    public int getFirstErrorPosition() {
+        return(errorPositions[0]);
     }
+    // </editor-fold>
+    
+    // <editor-fold defaultstate="collapsed" desc=" Attributes ">
+    private int errorPositions[] = new int[10];     // Array of error positions.
+    // </editor-fold>
 }

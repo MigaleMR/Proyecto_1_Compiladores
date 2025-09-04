@@ -18,6 +18,8 @@ import java.util.LinkedHashMap;
 
 import Triangle.ErrorReporter;
 import Triangle.AbstractSyntaxTrees.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Parser {
 
@@ -259,7 +261,7 @@ public class Parser {
         commandAST = new IfCommand(eAST, c1AST, c2AST, commandPos);
       }
       break;
-
+      
     case Token.WHILE:
       {
         acceptIt();
@@ -270,33 +272,49 @@ public class Parser {
         commandAST = new WhileCommand(eAST, cAST, commandPos);
       }
       break;
-
-    // Parsea un comando FOR con sintaxis: for variable := expresion1 to/downto expresion2 do comando
-    // Detecta si es un bucle ascendente (to) o descendente (downto) y crea el AST correspondiente
+      
+    // Parsing de comando FOR, este analiza la sintaxis "for variable := expr to/downto expr do command"
     case Token.FOR:
-      {
+    {
+        boolean ascending = true;
         acceptIt();
         Vname vAST = parseVname();
         accept(Token.BECOMES);
         Expression e1AST = parseExpression();
         
-        boolean isDownto = false;
-        if (currentToken.kind == Token.TO) {
-          acceptIt();
-        } else if (currentToken.kind == Token.DOWNTO) {
-          acceptIt();
-          isDownto = true;
-        } else {
-          syntacticError("\"to\" or \"downto\" expected here", currentToken.spelling);
+        switch (currentToken.kind) {
+            case Token.TO:
+                acceptIt();
+                break;
+            case Token.DOWNTO:
+                acceptIt();
+                ascending = false;
+                break;
+            default:
+                syntacticError("Expected 'to' or 'downto'", currentToken.spelling);
+                break;
         }
         
         Expression e2AST = parseExpression();
         accept(Token.DO);
         Command cAST = parseSingleCommand();
         finish(commandPos);
-        commandAST = new ForCommand(vAST, e1AST, e2AST, isDownto, cAST, commandPos);
-      }
-      break;
+        commandAST = new ForCommand(vAST,e1AST,e2AST,cAST, ascending, commandPos);  
+    }
+    break;
+    
+    // Parsing de comando REPEAT: analiza la sintaxis "repeat command until expression"
+    //Repeat command parse
+    case Token.REPEAT:
+    {
+        acceptIt();
+        Command cAST = parseSingleCommand();
+        accept(Token.UNTIL);
+        Expression eAST = parseExpression();
+        finish(commandPos);
+        commandAST = new RepeatCommand(cAST, eAST, commandPos);
+    }
+    break;
 
     case Token.SEMICOLON:
     case Token.END:
@@ -312,7 +330,7 @@ public class Parser {
       syntacticError("\"%\" cannot start a command",
         currentToken.spelling);
       break;
-
+    
     }
 
     return commandAST;
@@ -357,6 +375,7 @@ public class Parser {
       }
       break;
 
+    
     default:
       expressionAST = parseSecondaryExpression();
       break;

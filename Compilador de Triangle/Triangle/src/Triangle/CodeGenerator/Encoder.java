@@ -19,7 +19,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import javax.swing.text.TableView.TableRow;
 
 import TAM.Instruction;
 import TAM.Machine;
@@ -48,7 +47,8 @@ import Triangle.AbstractSyntaxTrees.EmptyCommand;
 import Triangle.AbstractSyntaxTrees.EmptyExpression;
 import Triangle.AbstractSyntaxTrees.EmptyFormalParameterSequence;
 import Triangle.AbstractSyntaxTrees.ErrorTypeDenoter;
-import Triangle.AbstractSyntaxTrees.ForCommand;
+import Triangle.AbstractSyntaxTrees.Expression;
+import Triangle.AbstractSyntaxTrees.ForCommand; //For command
 import Triangle.AbstractSyntaxTrees.FuncActualParameter;
 import Triangle.AbstractSyntaxTrees.FuncDeclaration;
 import Triangle.AbstractSyntaxTrees.FuncFormalParameter;
@@ -72,6 +72,7 @@ import Triangle.AbstractSyntaxTrees.ProcFormalParameter;
 import Triangle.AbstractSyntaxTrees.Program;
 import Triangle.AbstractSyntaxTrees.RecordExpression;
 import Triangle.AbstractSyntaxTrees.RecordTypeDenoter;
+import Triangle.AbstractSyntaxTrees.RepeatCommand; //Repeat commmand
 import Triangle.AbstractSyntaxTrees.SequentialCommand;
 import Triangle.AbstractSyntaxTrees.SequentialDeclaration;
 import Triangle.AbstractSyntaxTrees.SimpleTypeDenoter;
@@ -83,6 +84,7 @@ import Triangle.AbstractSyntaxTrees.SingleFormalParameterSequence;
 import Triangle.AbstractSyntaxTrees.SingleRecordAggregate;
 import Triangle.AbstractSyntaxTrees.SubscriptVname;
 import Triangle.AbstractSyntaxTrees.TypeDeclaration;
+import Triangle.AbstractSyntaxTrees.TypeDenoter;
 import Triangle.AbstractSyntaxTrees.UnaryExpression;
 import Triangle.AbstractSyntaxTrees.UnaryOperatorDeclaration;
 import Triangle.AbstractSyntaxTrees.VarActualParameter;
@@ -92,6 +94,9 @@ import Triangle.AbstractSyntaxTrees.Visitor;
 import Triangle.AbstractSyntaxTrees.Vname;
 import Triangle.AbstractSyntaxTrees.VnameExpression;
 import Triangle.AbstractSyntaxTrees.WhileCommand;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public final class Encoder implements Visitor {
 
@@ -160,46 +165,62 @@ public final class Encoder implements Visitor {
     emit(Machine.JUMPIFop, Machine.trueRep, Machine.CBr, loopAddr);
     return null;
   }
-
-  // Genera código TAM para un comando FOR (to/downto): asigna valor inicial, ejecuta bucle,
-  // actualiza variable de control y verifica condición de salida
+  
+  // Generación de código para comando FOR: implementa bucle con variable de control e incremento/decremento
+  //For command
   public Object visitForCommand(ForCommand ast, Object o) {
-    Frame frame = (Frame) o;
-    int jumpAddr, loopAddr;
-
-    ast.E1.visit(this, frame);
-    encodeStore(ast.V, frame, Machine.integerSize);
-    
-    jumpAddr = nextInstrAddr;
-    emit(Machine.JUMPop, 0, Machine.CBr, 0);
-    
-
-    loopAddr = nextInstrAddr;
-    ast.C.visit(this, frame);
-    
-    // Incrementar/decrementar la variable de control
-    encodeFetch(ast.V, frame, Machine.integerSize);
-    emit(Machine.LOADLop, 0, 0, 1); // Cargar constante 1
-    if (ast.isDowntoLoop) {
-      emit(Machine.CALLop, 0, Machine.PBr, Machine.subDisplacement);  // Restar
-    } else {
-      emit(Machine.CALLop, 0, Machine.PBr, Machine.addDisplacement);  // Sumar
-    }
-    encodeStore(ast.V, frame, Machine.integerSize);
-    
-    // Test de condición: comparar variable de control con E2
-    patch(jumpAddr, nextInstrAddr);
-    encodeFetch(ast.V, frame, Machine.integerSize);
-    ast.E2.visit(this, frame);
-    
-    if (ast.isDowntoLoop) {
-      emit(Machine.CALLop, 0, Machine.PBr, Machine.geDisplacement); // >=
-    } else {
-      emit(Machine.CALLop, 0, Machine.PBr, Machine.leDisplacement); // <=
-    }
-    emit(Machine.JUMPIFop, Machine.trueRep, Machine.CBr, loopAddr);
-    
-    return null;
+      Frame frame = (Frame) o;
+      int jumpAddr, loopAddr;
+      
+      
+      ast.E1.visit(this, frame);
+      encodeStore(ast.V, new Frame (frame, 1), 1);
+      
+      
+      jumpAddr = nextInstrAddr;
+      emit(Machine.JUMPop, 0, Machine.CBr, 0);
+      
+      
+      loopAddr = nextInstrAddr;
+      ast.C.visit(this, frame);
+      
+      
+      encodeFetch(ast.V, frame, 1);
+      
+      if (ast.asc) {
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.succDisplacement);
+      } else {
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.predDisplacement);
+      }
+      encodeStore(ast.V, new Frame (frame, 1), 1);
+      
+      patch(jumpAddr, nextInstrAddr);
+      
+      encodeFetch(ast.V, frame, 1);
+      ast.E2.visit(this, frame);
+      
+      if (ast.asc) {
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.leDisplacement);
+      } else {
+          emit(Machine.CALLop, Machine.SBr, Machine.PBr, Machine.geDisplacement);
+      }
+      
+      emit(Machine.JUMPIFop, Machine.trueRep, Machine.CBr, loopAddr);
+      return null;
+  }
+  
+  // Generación de código para comando REPEAT: implementa bucle que evalúa condición al final
+  //Repeat command
+  public Object visitRepeatCommand(RepeatCommand ast, Object o) {
+      Frame frame = (Frame) o;
+      int loopAddr;
+      
+      loopAddr = nextInstrAddr;
+      ast.C.visit(this, frame);
+      ast.E.visit(this, frame);
+      
+      emit(Machine.JUMPIFop, Machine.falseRep, Machine.CBr, loopAddr);
+      return null;
   }
   
   // Expressions
@@ -294,6 +315,7 @@ public final class Encoder implements Visitor {
     encodeFetch(ast.V, frame, valSize.intValue());
     return valSize;
   }
+
 
 
   // Declarations

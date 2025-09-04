@@ -20,12 +20,15 @@ public interface Visitor {
   public abstract Object visitAssignCommand(AssignCommand ast, Object o);
   public abstract Object visitCallCommand(CallCommand ast, Object o);
   public abstract Object visitEmptyCommand(EmptyCommand ast, Object o);
-  // ForCommand
-  public abstract Object visitForCommand(ForCommand ast, Object o);
   public abstract Object visitIfCommand(IfCommand ast, Object o);
   public abstract Object visitLetCommand(LetCommand ast, Object o);
   public abstract Object visitSequentialCommand(SequentialCommand ast, Object o);
   public abstract Object visitWhileCommand(WhileCommand ast, Object o);
+  // Método visitor para procesar comandos FOR con iteración controlada por rango
+  public abstract Object visitForCommand(ForCommand ast, Object o); //For command
+  // Método visitor para procesar comandos REPEAT con condición de parada al final
+  public abstract Object visitRepeatCommand(RepeatCommand ast, Object o); //Repeat command
+
 
   // Expressions
   public abstract Object visitArrayExpression(ArrayExpression ast, Object o);
