@@ -40,11 +40,11 @@ public class Compiler {
     private static Parser parser;
     private static Checker checker;
     private static Encoder encoder;
-    private static ErrorReporter reporter;
+    public static ErrorReporter reporter;
     private static Drawer drawer;
 
     /** The AST representing the source program. */
-    private static Program theAST;
+    public static Program theAST;
 
     /**
      * Compile the source program to TAM machine code.
@@ -66,6 +66,7 @@ public class Compiler {
 
         System.out.println("********** " +
                            "Triangle Compiler (Java Version 2.1)" +
+                           " Hola Mundo! " +
                            " **********");
 
         System.out.println("Syntactic Analysis ...");

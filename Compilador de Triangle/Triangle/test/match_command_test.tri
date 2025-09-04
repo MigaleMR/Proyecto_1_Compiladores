@@ -1,0 +1,14 @@
+let
+  var x: Integer;
+  var y: Integer
+in
+  begin
+    x := 1;
+    match x of
+      case 1: y := 10
+      case 2: y := 20  
+      case 3: y := 30
+      otherwise: y := 0
+    end;
+    putint(y)
+  end

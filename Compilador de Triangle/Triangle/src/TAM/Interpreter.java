@@ -616,7 +616,7 @@ public class Interpreter {
 // RUNNING
 
   public static void main(String[] args) {
-    System.out.println("********** TAM Interpreter (Java Version 2.1) **********");
+    System.out.println("********** TAM Interpreter (Java Version 2.1) HOLA MUNDO! **********");
 
     if (args.length == 1)
       objectName = args[0];

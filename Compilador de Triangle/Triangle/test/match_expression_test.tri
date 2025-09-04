@@ -1,0 +1,14 @@
+let
+  var x: Integer;
+  var result: Integer
+in
+  begin
+    x := 2;
+    result := match x of
+      case 1: 100
+      case 2: 200
+      case 3: 300
+      otherwise: 0
+    end;
+    putint(result)
+  end

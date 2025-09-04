@@ -69,58 +69,49 @@ final class Token extends Object {
     // reserved words - must be in alphabetical order...
     ARRAY		= 4,
     BEGIN		= 5,
-    CASE    = 6,
+    CASE                = 6, // CASE
     CONST		= 7,
     DO			= 8,
-    
-    // Token para dirección descendente en comandos FOR
-    DOWNTO  = 9,
+    DOWNTO              = 9, //Part of FOR command
     ELSE		= 10,
     END			= 11,
-
-    // Token que inicia un comando FOR para iteración controlada
-    FOR     = 12, 
+    FOR                 = 12, //FOR command
     FUNC		= 13,
     IF			= 14,
     IN			= 15,
     LET			= 16,
-    OF			= 17, 
-    OTHERWISE			= 18, 
-    PROC		= 19,
-    RECORD		= 20,
-
-    // Token que inicia un comando REPEAT para repetición con condición al final
-    REPEAT  = 21, 
-    THEN		= 22,
-
-    // Token para dirección ascendente en comandos FOR (for i := 1 to 10)
-    TO      = 23, 
-    TYPE		= 24,
-
-    // Token que indica condición de parada en comandos REPEAT (until condition)
-    UNTIL   = 25, 
-    VAR			= 26,
-    WHILE		= 27,
+    MATCH               = 17, // MATCH     
+    OF			= 18, 
+    OTHERWISE           = 19, //OTHERWISE
+    PROC		= 20,
+    RECORD		= 21,
+    REPEAT              = 22, //Repeat command
+    THEN		= 23,
+    TO                  = 24, //Part of FOR command
+    TYPE		= 25,
+    UNTIL               = 26, //Part of REPEAT command
+    VAR			= 27,
+    WHILE		= 28,
 
     // punctuation...
-    DOT			= 28,
-    COLON		= 29,
-    SEMICOLON	= 30,
-    COMMA		= 31,
-    BECOMES		= 32,
-    IS			= 33,
+    DOT			= 29,
+    COLON		= 30,
+    SEMICOLON	= 31,
+    COMMA		= 32,
+    BECOMES		= 33,
+    IS			= 34,
 
     // brackets...
-    LPAREN		= 34,
-    RPAREN		= 35,
-    LBRACKET	= 36,
-    RBRACKET	= 37,
-    LCURLY		= 38,
-    RCURLY		= 39,
+    LPAREN		= 35,
+    RPAREN		= 36,
+    LBRACKET	= 37,
+    RBRACKET	= 38,
+    LCURLY		= 39,
+    RCURLY		= 40,
 
     // special tokens...
-    EOT			= 40,
-    ERROR		= 41;
+    EOT			= 41,
+    ERROR		= 42;
 
   private static String[] tokenTable = new String[] {
     "<int>",
@@ -129,26 +120,27 @@ final class Token extends Object {
     "<operator>",
     "array",
     "begin",
-    "case", 
+    "case", // case
     "const",
     "do",
-    "downto", 
+    "downto", //Part of FOR command
     "else",
     "end",
-    "for", 
+    "for", //FOR command
     "func",
     "if",
     "in",
     "let",
+    "match", // match
     "of",
-    "otherwise", 
+    "otherwise", // otherwise
     "proc",
     "record",
-    "repeat", 
+    "repeat", //Repeat command
     "then",
-    "to", 
+    "to", //Part of FOR command
     "type",
-    "until", 
+    "until", //Part of REPEAT command
     "var",
     "while",
     ".",

@@ -17,6 +17,7 @@ import Triangle.AbstractSyntaxTrees.CallExpression;
 import Triangle.AbstractSyntaxTrees.CharTypeDenoter;
 import Triangle.AbstractSyntaxTrees.CharacterExpression;
 import Triangle.AbstractSyntaxTrees.CharacterLiteral;
+import Triangle.AbstractSyntaxTrees.Command;
 import Triangle.AbstractSyntaxTrees.ConstActualParameter;
 import Triangle.AbstractSyntaxTrees.ConstDeclaration;
 import Triangle.AbstractSyntaxTrees.ConstFormalParameter;
@@ -26,8 +27,8 @@ import Triangle.AbstractSyntaxTrees.EmptyCommand;
 import Triangle.AbstractSyntaxTrees.EmptyExpression;
 import Triangle.AbstractSyntaxTrees.EmptyFormalParameterSequence;
 import Triangle.AbstractSyntaxTrees.ErrorTypeDenoter;
-// Comando For
-import Triangle.AbstractSyntaxTrees.ForCommand; 
+import Triangle.AbstractSyntaxTrees.Expression;
+import Triangle.AbstractSyntaxTrees.ForCommand; //For command
 import Triangle.AbstractSyntaxTrees.FuncActualParameter;
 import Triangle.AbstractSyntaxTrees.FuncDeclaration;
 import Triangle.AbstractSyntaxTrees.FuncFormalParameter;
@@ -40,7 +41,7 @@ import Triangle.AbstractSyntaxTrees.IntegerLiteral;
 import Triangle.AbstractSyntaxTrees.LetCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
 import Triangle.AbstractSyntaxTrees.MatchCommand;
-import Triangle.AbstractSyntaxTrees.MatchExpression;
+import Triangle.AbstractSyntaxTrees.MatchExpression; // Match expression
 import Triangle.AbstractSyntaxTrees.MultipleActualParameterSequence;
 import Triangle.AbstractSyntaxTrees.MultipleArrayAggregate;
 import Triangle.AbstractSyntaxTrees.MultipleFieldTypeDenoter;
@@ -53,8 +54,7 @@ import Triangle.AbstractSyntaxTrees.ProcFormalParameter;
 import Triangle.AbstractSyntaxTrees.Program;
 import Triangle.AbstractSyntaxTrees.RecordExpression;
 import Triangle.AbstractSyntaxTrees.RecordTypeDenoter;
-// Comando repeat
-import Triangle.AbstractSyntaxTrees.RepeatCommand; 
+import Triangle.AbstractSyntaxTrees.RepeatCommand; //Repeat command
 import Triangle.AbstractSyntaxTrees.SequentialCommand;
 import Triangle.AbstractSyntaxTrees.SequentialDeclaration;
 import Triangle.AbstractSyntaxTrees.SimpleTypeDenoter;
@@ -122,16 +122,33 @@ public class TreeVisitor implements Visitor {
         return(createBinary("While Command", ast.E, ast.C));
     }
     
-    // Visitor para crear nodo del árbol sintáctico de comando FOR en el IDE
+    // Comando For - Crea un nodo de árbol que muestra la variable, rangos y comando del bucle for
     public Object visitForCommand(ForCommand ast, Object obj) {
         return(createQuaternary("For Command", ast.V, ast.E1, ast.E2, ast.C));
     }
     
-    // Visitor para crear nodo del árbol sintáctico de comando REPEAT en el IDE
+    // Comando Repeat - Crea un nodo de árbol que muestra el comando y la condición del bucle repeat
     public Object visitRepeatCommand(RepeatCommand ast, Object obj) {
         return(createBinary("Repeat Command", ast.C, ast.E));
     }
     
+    // Comando Match - Crea un nodo de árbol que muestra la expresión principal y todos los casos
+    public Object visitMatchCommand(MatchCommand ast, Object obj) {
+        DefaultMutableTreeNode matchNode = new DefaultMutableTreeNode("Match Command");
+        // Nodo para la expresión principal
+        matchNode.add((DefaultMutableTreeNode) ast.E1.visit(this, null));
+        // Nodo para los casos
+        for (Expression caseLiteral : ast.CList.keySet()) {
+            Command caseCommand = ast.CList.get(caseLiteral);
+            matchNode.add((DefaultMutableTreeNode) caseLiteral.visit(this, null)); // Literal del caso
+            matchNode.add((DefaultMutableTreeNode) caseCommand.visit(this, null)); // Commando del caso
+        }
+        if (ast.C != null){
+            matchNode.add((DefaultMutableTreeNode) ast.C.visit(this, null));
+        }
+        
+        return matchNode;
+    }   
     // </editor-fold>
     
     // <editor-fold defaultstate="collapsed" desc=" Expressions ">
@@ -180,6 +197,21 @@ public class TreeVisitor implements Visitor {
         return(createUnary("Vname Expression", ast.V));
     }
     
+    // Expresión Match - Crea un nodo de árbol que muestra la expresión principal y todos los casos con sus expresiones
+    public Object visitMatchExpression(MatchExpression ast, Object obj) {
+        DefaultMutableTreeNode matchNode = new DefaultMutableTreeNode("Match Expression");
+        // Nodo para la expresión principal
+        matchNode.add((DefaultMutableTreeNode) ast.E1.visit(this, null));
+        // Nodo para la lista de casos
+        for (Expression caseLiteral : ast.EList.keySet()) {
+            Expression caseExpression = ast.EList.get(caseLiteral);
+            matchNode.add((DefaultMutableTreeNode) caseLiteral.visit(this, null)); // Literal del caso
+            matchNode.add((DefaultMutableTreeNode) caseExpression.visit(this, null)); // Expresión del caso
+        }
+        matchNode.add((DefaultMutableTreeNode) ast.E2.visit(this, null));
+
+        return matchNode;
+    }   
     // </editor-fold>
     
     // <editor-fold defaultstate="collapsed" desc=" Declarations ">
@@ -455,14 +487,4 @@ public class TreeVisitor implements Visitor {
         return(t);             
     }
     // </editor-fold>
-
-    @Override
-    public Object visitMatchCommand(MatchCommand mc, Object o) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public Object visitMatchExpression(MatchExpression me, Object o) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 }

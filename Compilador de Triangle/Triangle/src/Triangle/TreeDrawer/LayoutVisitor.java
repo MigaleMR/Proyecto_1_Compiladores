@@ -62,6 +62,8 @@ import Triangle.AbstractSyntaxTrees.ProcFormalParameter;
 import Triangle.AbstractSyntaxTrees.Program;
 import Triangle.AbstractSyntaxTrees.RecordExpression;
 import Triangle.AbstractSyntaxTrees.RepeatCommand;
+import Triangle.AbstractSyntaxTrees.MatchCommand;
+import Triangle.AbstractSyntaxTrees.MatchExpression;
 import Triangle.AbstractSyntaxTrees.RecordTypeDenoter;
 import Triangle.AbstractSyntaxTrees.SequentialCommand;
 import Triangle.AbstractSyntaxTrees.SequentialDeclaration;
@@ -123,18 +125,21 @@ public class LayoutVisitor implements Visitor {
     return layoutBinary("WhileCom.", ast.E, ast.C);
   }
   
-  // Layout para visualización del árbol sintáctico de comando FOR con sus cuatro componentes
-  //For command
+  // Comando For - Layout para visualización del árbol sintáctico con los cuatro componentes del bucle for
   public Object visitForCommand(ForCommand ast, Object obj) {
       return layoutQuaternary("ForCom.",ast.V,ast.E1,ast.E2,ast.C);
   }
   
-  // Layout para visualización del árbol sintáctico de comando REPEAT con comando y condición
-  //Repeat command
+  // Comando Repeat - Layout para visualización del árbol sintáctico con comando y condición
   public Object visitRepeatCommand(RepeatCommand ast, Object obj) {
       return layoutBinary("RepeatCom.",ast.C, ast.E);
   }
   
+  // Comando Match - Layout para visualización del árbol sintáctico del comando match
+  public Object visitMatchCommand(MatchCommand ast, Object obj) {
+    return layoutTernary("MatchCom.", ast.E1, null, ast.C); // Simplificación para el layout
+  }
+
   // Expressions
   public Object visitArrayExpression(ArrayExpression ast, Object obj) {
     return layoutUnary("ArrayExpr.", ast.AA);
@@ -180,6 +185,10 @@ public class LayoutVisitor implements Visitor {
     return layoutUnary("VnameExpr.", ast.V);
   }
 
+  // Expresión Match - Layout para visualización del árbol sintáctico de la expresión match
+  public Object visitMatchExpression(MatchExpression ast, Object obj) {
+    return layoutTernary("MatchExpr.", ast.E1, null, ast.E2); // Simplificación para el layout
+  }
 
   // Declarations
   public Object visitBinaryOperatorDeclaration(BinaryOperatorDeclaration ast, Object obj) {

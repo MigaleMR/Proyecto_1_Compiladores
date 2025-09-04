@@ -1,0 +1,17 @@
+! Programa simple para probar el comando MATCH con otherwise
+let var y : Integer;
+    var resultado : Integer
+in
+begin
+  getint(var y);
+  
+  match y of
+    case 1: resultado := 100
+    case 2: resultado := 200
+    case 3: resultado := 300
+    case 4: resultado := 400
+  otherwise resultado := 999
+  end;
+  
+  putint(resultado)
+end

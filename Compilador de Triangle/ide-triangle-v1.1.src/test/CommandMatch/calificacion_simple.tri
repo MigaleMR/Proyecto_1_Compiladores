@@ -1,0 +1,17 @@
+let
+  var calificacion: Integer;
+  var letra: Integer;
+in
+  begin
+    calificacion :=60;
+    match calificacion of
+      case 90: letra := 65
+      case 80: letra := 66
+      case 70: letra := 67
+      case 60: letra := 68
+    otherwise:
+      letra := 70
+    end;
+    
+    putint(letra)
+  end

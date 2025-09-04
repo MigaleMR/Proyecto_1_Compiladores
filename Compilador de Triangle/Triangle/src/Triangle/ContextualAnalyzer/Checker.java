@@ -89,9 +89,9 @@ public final class Checker implements Visitor {
     return null;
   }
   
-  // Verificación semántica para comando FOR: valida tipos de variable y expresiones de rango
-  //For command
-  public Object visitForCommand(ForCommand ast, Object o) { //For command
+  // Comando For - Verifica que la variable de control sea mutable y de tipo entero o caracter,
+  // y que las expresiones de inicio y fin sean del mismo tipo que la variable
+  public Object visitForCommand(ForCommand ast, Object o) {
       TypeDenoter vType = (TypeDenoter) ast.V.visit(this, null);
       if (! ast.V.variable)
         reporter.reportError("identifier is not a variable", "", ast.V.position);
@@ -110,14 +110,39 @@ public final class Checker implements Visitor {
       return null;
   }
   
-  // Verificación semántica para comando REPEAT: valida que la condición sea booleana
-  //Repeat command
+  // Comando Repeat - Verifica que la expresión de condición sea de tipo booleano
   public Object visitRepeatCommand(RepeatCommand ast, Object o) {
       TypeDenoter eType = (TypeDenoter) ast.E.visit(this, null);
       if (! eType.equals(StdEnvironment.booleanType))
       reporter.reportError("Boolean expression expected here", "", ast.E.position);
     ast.C.visit(this, null);
       return null;
+  }
+  
+  // Comando Match - Verifica que la expresión principal sea de tipo entero o booleano
+  // y que todos los casos tengan el mismo tipo que la expresión principal
+  public Object visitMatchCommand(MatchCommand ast, Object o) {
+    TypeDenoter matchType = (TypeDenoter) ast.E1.visit(this, null);
+
+    if (!matchType.equals(StdEnvironment.integerType) && !matchType.equals(StdEnvironment.booleanType)) {
+        reporter.reportError("Match expression must be of type Integer or Boolean", "", ast.E1.position);
+    }
+
+    for (Expression caseLiteral : ast.CList.keySet()) {
+        TypeDenoter caseLiteralType = (TypeDenoter) caseLiteral.visit(this, null);
+        if (!caseLiteralType.equals(matchType)) {
+            reporter.reportError("Case literal type does not match match expression type", "", caseLiteral.position);
+        }
+
+        Command caseCommand = ast.CList.get(caseLiteral);
+        caseCommand.visit(this, null);
+    }
+
+    if (ast.C != null){
+        ast.C.visit(this, null);  
+    }
+    
+    return null;
   }
   
   // Expressions
@@ -199,6 +224,40 @@ public final class Checker implements Visitor {
     if (! e2Type.equals(e3Type))
       reporter.reportError ("incompatible limbs in if-expression", "", ast.position);
     ast.type = e2Type;
+    return ast.type;
+  }
+  
+  // Expresión Match - Verifica que la expresión principal sea de tipo entero o booleano,
+  // que todos los casos tengan el mismo tipo que la expresión principal,
+  // y que todas las expresiones de resultado tengan el mismo tipo
+  public Object visitMatchExpression(MatchExpression ast, Object o) {
+   
+      TypeDenoter matchType = (TypeDenoter) ast.E1.visit(this, null);
+    TypeDenoter caseExpressionType = null;
+    // La expresión principal debe ser de tipo Integer o Boolean
+    if (!matchType.equals(StdEnvironment.integerType) && !matchType.equals(StdEnvironment.booleanType)) {
+        reporter.reportError("Match expression must be of type Integer or Boolean", "", ast.E1.position);
+    }
+
+    // Verificar cada caso en la lista de casos
+    for (Expression caseLiteral : ast.EList.keySet()) {
+        TypeDenoter caseLiteralType = (TypeDenoter) caseLiteral.visit(this, null);
+        if (!caseLiteralType.equals(matchType)) {
+            reporter.reportError("Case literal type does not match match expression type", "", caseLiteral.position);
+        }
+
+        // Verificar el tipo de la expresión asociada al caso
+        Expression caseExpression = ast.EList.get(caseLiteral);
+        caseExpressionType = (TypeDenoter)caseExpression.visit(this, null);
+    }
+
+    // Verificar otherwise
+    ast.E2.visit(this, null);
+    if (!ast.E2.type.equals(caseExpressionType) && caseExpressionType != null) {
+        reporter.reportError("Otherwise expression type does not match match expression type", "", ast.E2.position);
+    }
+    
+    ast.type = StdEnvironment.integerType;
     return ast.type;
   }
 

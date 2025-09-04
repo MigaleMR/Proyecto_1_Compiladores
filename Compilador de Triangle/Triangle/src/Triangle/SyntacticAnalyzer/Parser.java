@@ -273,7 +273,7 @@ public class Parser {
       }
       break;
       
-    // Parsing de comando FOR, este analiza la sintaxis "for variable := expr to/downto expr do command"
+    //For command parse
     case Token.FOR:
     {
         boolean ascending = true;
@@ -303,7 +303,6 @@ public class Parser {
     }
     break;
     
-    // Parsing de comando REPEAT: analiza la sintaxis "repeat command until expression"
     //Repeat command parse
     case Token.REPEAT:
     {
@@ -315,6 +314,46 @@ public class Parser {
         commandAST = new RepeatCommand(cAST, eAST, commandPos);
     }
     break;
+    
+    // Match command parse
+    case Token.MATCH:
+      {
+        acceptIt();
+        LinkedHashMap<Expression, Command> caseList = new LinkedHashMap<>();
+        Expression eAST = parseExpression();
+        accept(Token.OF);
+        // cases
+        Expression caAST;
+        while (currentToken.kind == Token.CASE){
+            List <Expression> expressions;
+            expressions = new ArrayList<>();
+            accept(Token.CASE);
+            caAST = parseExpression();
+            expressions.add(caAST);
+            while (currentToken.kind == Token.COMMA){
+              accept(Token.COMMA);
+              caAST = parseExpression();
+              expressions.add(caAST);
+            }
+
+            accept(Token.COLON);
+            Command cAST = parseSingleCommand();
+            for (Expression exp : expressions){
+              caseList.put(exp,cAST);
+            }
+        }
+        Command c2AST = null;
+        // Otherwise
+        if (currentToken.kind == Token.OTHERWISE){
+            accept(Token.OTHERWISE);
+            accept(Token.COLON);
+            c2AST = parseSingleCommand();
+        }
+        
+        accept(Token.END);
+        finish(commandPos);
+        commandAST = new MatchCommand(eAST, caseList, c2AST, commandPos);
+      } break;
 
     case Token.SEMICOLON:
     case Token.END:
@@ -374,6 +413,42 @@ public class Parser {
         expressionAST = new IfExpression(e1AST, e2AST, e3AST, expressionPos);
       }
       break;
+
+    // match expression parse
+    case Token.MATCH:
+      {
+        acceptIt();
+        LinkedHashMap<Expression, Expression> caseList = new LinkedHashMap<>();
+        Expression eAST = parseExpression();
+        accept(Token.OF);
+        // cases
+        Expression caAST; // case
+        while (currentToken.kind == Token.CASE){
+            List <Expression> expressions;
+            expressions = new ArrayList<>();
+            accept(Token.CASE);
+            caAST = parseExpression();
+            expressions.add(caAST);
+            while (currentToken.kind == Token.COMMA){
+              accept(Token.COMMA);
+              caAST = parseExpression();
+              expressions.add(caAST);
+            }
+
+            accept(Token.COLON);
+            Expression ecAST = parseExpression();
+            for (Expression exp : expressions){
+              caseList.put(exp,ecAST);
+            }
+        }
+        // Otherwise
+        accept(Token.OTHERWISE);
+        accept(Token.COLON);
+        Expression e2AST = parseExpression();
+        accept(Token.END);
+        finish(expressionPos);
+        expressionAST = new MatchExpression(eAST, caseList, e2AST, expressionPos);
+      } break;
 
     
     default:

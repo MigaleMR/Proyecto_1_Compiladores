@@ -19,6 +19,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import javax.swing.text.TableView.TableRow;
 
 import TAM.Instruction;
 import TAM.Machine;
@@ -60,6 +61,8 @@ import Triangle.AbstractSyntaxTrees.IntegerExpression;
 import Triangle.AbstractSyntaxTrees.IntegerLiteral;
 import Triangle.AbstractSyntaxTrees.LetCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
+import Triangle.AbstractSyntaxTrees.MatchCommand;
+import Triangle.AbstractSyntaxTrees.MatchExpression; // Match expression
 import Triangle.AbstractSyntaxTrees.MultipleActualParameterSequence;
 import Triangle.AbstractSyntaxTrees.MultipleArrayAggregate;
 import Triangle.AbstractSyntaxTrees.MultipleFieldTypeDenoter;
@@ -166,8 +169,8 @@ public final class Encoder implements Visitor {
     return null;
   }
   
-  // Generación de código para comando FOR: implementa bucle con variable de control e incremento/decremento
-  //For command
+  // Comando For - Genera código para un bucle for que inicializa la variable de control,
+  // verifica la condición del rango y actualiza la variable en cada iteración
   public Object visitForCommand(ForCommand ast, Object o) {
       Frame frame = (Frame) o;
       int jumpAddr, loopAddr;
@@ -209,8 +212,8 @@ public final class Encoder implements Visitor {
       return null;
   }
   
-  // Generación de código para comando REPEAT: implementa bucle que evalúa condición al final
-  //Repeat command
+  // Comando Repeat - Genera código para un bucle repeat-until que ejecuta el cuerpo
+  // y luego evalúa la condición para determinar si continuar
   public Object visitRepeatCommand(RepeatCommand ast, Object o) {
       Frame frame = (Frame) o;
       int loopAddr;
@@ -222,6 +225,43 @@ public final class Encoder implements Visitor {
       emit(Machine.JUMPIFop, Machine.falseRep, Machine.CBr, loopAddr);
       return null;
   }
+  
+  // Comando Match - Genera código que compara la expresión principal con cada caso
+  // y ejecuta el comando correspondiente al caso que coincida
+  public Object visitMatchCommand(MatchCommand ast, Object o) {
+    Frame frame = (Frame) o;
+    List<Integer> endJumps = new ArrayList<>();
+
+    for (Expression caseLiteral : ast.CList.keySet()) {
+        ast.E1.visit(this, frame);
+        caseLiteral.visit(this, frame);
+
+        emit(Machine.LOADLop, 0, 0,  1);
+        emit(Machine.CALLop, Machine.LBr, Machine.PBr, Machine.eqDisplacement);
+ 
+        int jumpIfTrue = nextInstrAddr;
+        emit(Machine.JUMPIFop, Machine.falseRep, Machine.CBr, 0);
+        ast.CList.get(caseLiteral).visit(this, frame);
+        
+        int jumpEnd = nextInstrAddr;
+        emit(Machine.JUMPop, 0, Machine.CBr, 0);
+        
+        endJumps.add(jumpEnd);
+
+        patch(jumpIfTrue, nextInstrAddr);
+    }
+
+    if (ast.C != null) {
+        ast.C.visit(this, frame);
+    } else {
+        emit (Machine.LOADLop, 0, 0, 0);
+    }
+  
+    for (int addr : endJumps) {
+        patch(addr, nextInstrAddr);
+    }
+    return null;
+ }
   
   // Expressions
   public Object visitArrayExpression(ArrayExpression ast, Object o) {
@@ -315,6 +355,45 @@ public final class Encoder implements Visitor {
     encodeFetch(ast.V, frame, valSize.intValue());
     return valSize;
   }
+
+  // Expresión Match - Genera código que compara la expresión principal con cada caso
+  // y evalúa la expresión correspondiente al caso que coincida
+  public Object visitMatchExpression(MatchExpression ast, Object o) {
+    Frame frame = (Frame) o;
+    Integer size = 0;
+
+    List<Integer> endJumps = new ArrayList<>();
+
+    // Generar código para cada caso en EList
+    for (Expression caseLiteral : ast.EList.keySet()) {
+        ast.E1.visit(this, frame);
+        caseLiteral.visit(this, frame);
+
+        emit(Machine.LOADLop, 0, 0,  1);
+        emit(Machine.CALLop, Machine.LBr, Machine.PBr, Machine.eqDisplacement);
+
+        int jumpIfTrue = nextInstrAddr;
+        emit(Machine.JUMPIFop, Machine.falseRep, Machine.CBr, 0);
+        size = (Integer) ast.EList.get(caseLiteral).visit(this, frame);
+
+        int jumpEnd = nextInstrAddr;
+        emit(Machine.JUMPop, 0, Machine.CBr, 0);        
+        endJumps.add(jumpEnd);
+        patch(jumpIfTrue, nextInstrAddr);
+    }
+
+    if (ast.E2 != null) {
+        size = (Integer) ast.E2.visit(this, frame);
+    } else {
+        emit (Machine.LOADLop, 0, 0, 0);
+    }
+
+    for (int addr : endJumps) {
+        patch(addr, nextInstrAddr);
+    }
+
+    return size;
+}
 
 
 

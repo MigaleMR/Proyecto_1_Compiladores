@@ -2,11 +2,12 @@ package Triangle.AbstractSyntaxTrees;
 
 import Triangle.SyntacticAnalyzer.SourcePosition;
 
-// Clase AST que representa un comando FOR en Triangle
-// Estructura: for V := E1 to/downto E2 do C
+// Comando For - Representa un bucle con variable de control que itera sobre un rango de valores
+// Puede ser ascendente o descendente según el parámetro 'asc'
 public class ForCommand extends Command {
 
-  // Constructor que inicializa un comando FOR con variable, expresiones inicial y final, comando y dirección
+  // Constructor que inicializa el comando for con la variable de control, valores inicial y final,
+  // comando a ejecutar y dirección de iteración
   public ForCommand (Vname vAST, Expression e1AST, Expression e2AST, Command cAST, boolean ascending, SourcePosition thePosition) {
     super (thePosition);
     V = vAST;
@@ -16,14 +17,19 @@ public class ForCommand extends Command {
     asc = ascending;
   }
 
-  // Método visitor para permitir el recorrido del árbol sintáctico
+  // Método visitor para el patrón Visitor
   public Object visit(Visitor v, Object o) {
     return v.visitForCommand(this, o);
   }
 
+  // Variable de control del bucle que toma los valores del rango
   public Vname V;
+  // Expresión que define el valor inicial del rango
   public Expression E1;
+  // Expresión que define el valor final del rango
   public Expression E2;
+  // Comando que se ejecuta en cada iteración del bucle
   public Command C;
+  // Indica si la iteración es ascendente (true) o descendente (false)
   public boolean asc;
 }

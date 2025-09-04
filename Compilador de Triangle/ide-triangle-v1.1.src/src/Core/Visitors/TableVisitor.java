@@ -17,6 +17,7 @@ import Triangle.AbstractSyntaxTrees.CallExpression;
 import Triangle.AbstractSyntaxTrees.CharTypeDenoter;
 import Triangle.AbstractSyntaxTrees.CharacterExpression;
 import Triangle.AbstractSyntaxTrees.CharacterLiteral;
+import Triangle.AbstractSyntaxTrees.Command;
 import Triangle.AbstractSyntaxTrees.ConstActualParameter;
 import Triangle.AbstractSyntaxTrees.ConstDeclaration;
 import Triangle.AbstractSyntaxTrees.ConstFormalParameter;
@@ -26,8 +27,8 @@ import Triangle.AbstractSyntaxTrees.EmptyCommand;
 import Triangle.AbstractSyntaxTrees.EmptyExpression;
 import Triangle.AbstractSyntaxTrees.EmptyFormalParameterSequence;
 import Triangle.AbstractSyntaxTrees.ErrorTypeDenoter;
-// Comando For
-import Triangle.AbstractSyntaxTrees.ForCommand; 
+import Triangle.AbstractSyntaxTrees.Expression;
+import Triangle.AbstractSyntaxTrees.ForCommand; //For command
 import Triangle.AbstractSyntaxTrees.FuncActualParameter;
 import Triangle.AbstractSyntaxTrees.FuncDeclaration;
 import Triangle.AbstractSyntaxTrees.FuncFormalParameter;
@@ -53,8 +54,7 @@ import Triangle.AbstractSyntaxTrees.ProcFormalParameter;
 import Triangle.AbstractSyntaxTrees.Program;
 import Triangle.AbstractSyntaxTrees.RecordExpression;
 import Triangle.AbstractSyntaxTrees.RecordTypeDenoter;
-// Comando repeat
-import Triangle.AbstractSyntaxTrees.RepeatCommand; 
+import Triangle.AbstractSyntaxTrees.RepeatCommand; //Repeat command
 import Triangle.AbstractSyntaxTrees.SequentialCommand;
 import Triangle.AbstractSyntaxTrees.SequentialDeclaration;
 import Triangle.AbstractSyntaxTrees.SimpleTypeDenoter;
@@ -78,6 +78,7 @@ import Triangle.CodeGenerator.Field;
 import Triangle.CodeGenerator.KnownAddress;
 import Triangle.CodeGenerator.KnownRoutine;
 import Triangle.CodeGenerator.KnownValue;
+import Triangle.CodeGenerator.TypeRepresentation;
 import Triangle.CodeGenerator.UnknownAddress;
 import Triangle.CodeGenerator.UnknownRoutine;
 import Triangle.CodeGenerator.UnknownValue;
@@ -147,7 +148,7 @@ public class TableVisitor implements Visitor {
       return(null);
   }
   
-  // Visitor para recorrer todos los nodos de un comando FOR en la tabla de símbolos del IDE
+  // Comando For - Visita todos los componentes del bucle for para el análisis contextual
   public Object visitForCommand(ForCommand ast, Object o) { 
       ast.V.visit(this, null);
       ast.E1.visit(this, null);
@@ -157,7 +158,7 @@ public class TableVisitor implements Visitor {
       return(null);
   }
   
-  // Visitor para recorrer todos los nodos de un comando REPEAT en la tabla de símbolos del IDE
+  // Comando Repeat - Visita el comando y la expresión de condición para el análisis contextual
   public Object visitRepeatCommand(RepeatCommand ast, Object o) { 
       ast.C.visit(this, null);
       ast.E.visit(this, null);
@@ -165,6 +166,21 @@ public class TableVisitor implements Visitor {
       return(null);
   }
   
+  // Comando Match - Visita la expresión principal, todos los casos y el comando por defecto
+  public Object visitMatchCommand(MatchCommand ast, Object o) {
+        ast.E1.visit(this, null);
+        LinkedHashMap<Expression, Command> map = ast.CList;
+        // visitar cases
+        for (Expression e : map.keySet()) {
+            Command c = map.get(e);
+            e.visit(this, null);
+            c.visit(this, null);
+        }
+        if (ast.C != null){
+            ast.C.visit(this, null);
+        }
+        return null;
+    } 
   // </editor-fold>
 
   // <editor-fold defaultstate="collapsed" desc=" Expressions ">
@@ -237,6 +253,21 @@ public class TableVisitor implements Visitor {
       
       return(null);
   }
+  
+  // Expresión Match - Visita la expresión principal, todos los casos con sus expresiones y la expresión por defecto
+  public Object visitMatchExpression(MatchExpression ast, Object o) {
+        ast.E1.visit(this, null);
+        LinkedHashMap<Expression, Expression> map = ast.EList;
+        // visitar cases
+        for (Expression e : map.keySet()) {
+            Expression e2 = map.get(e);
+            e2.visit(this, null);
+            e.visit(this, null);
+        }
+        
+        ast.E2.visit(this, null);
+        return null;
+    } 
   // </editor-fold>
   
   // <editor-fold defaultstate="collapsed" desc=" Declarations ">
@@ -647,14 +678,4 @@ public class TableVisitor implements Visitor {
   // <editor-fold defaultstate="collapsed" desc=" Attributes ">
     private DefaultTableModel model;
     // </editor-fold>
-
-    @Override
-    public Object visitMatchCommand(MatchCommand mc, Object o) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public Object visitMatchExpression(MatchExpression me, Object o) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 }

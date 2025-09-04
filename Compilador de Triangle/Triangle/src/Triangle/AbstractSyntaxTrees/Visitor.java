@@ -24,11 +24,12 @@ public interface Visitor {
   public abstract Object visitLetCommand(LetCommand ast, Object o);
   public abstract Object visitSequentialCommand(SequentialCommand ast, Object o);
   public abstract Object visitWhileCommand(WhileCommand ast, Object o);
-  // Método visitor para procesar comandos FOR con iteración controlada por rango
-  public abstract Object visitForCommand(ForCommand ast, Object o); //For command
-  // Método visitor para procesar comandos REPEAT con condición de parada al final
-  public abstract Object visitRepeatCommand(RepeatCommand ast, Object o); //Repeat command
-
+  // Comando For - Iteración con variable de control y rango definido
+  public abstract Object visitForCommand(ForCommand ast, Object o);
+  // Comando Repeat - Iteración que ejecuta el cuerpo al menos una vez hasta que la condición sea verdadera
+  public abstract Object visitRepeatCommand(RepeatCommand ast, Object o);
+  // Comando Match - Estructura de control que compara una expresión con múltiples casos
+  public abstract Object visitMatchCommand(MatchCommand ast, Object o);
 
   // Expressions
   public abstract Object visitArrayExpression(ArrayExpression ast, Object o);
@@ -42,6 +43,8 @@ public interface Visitor {
   public abstract Object visitRecordExpression(RecordExpression ast, Object o);
   public abstract Object visitUnaryExpression(UnaryExpression ast, Object o);
   public abstract Object visitVnameExpression(VnameExpression ast, Object o);
+  // Expresión Match - Expresión condicional que evalúa diferentes casos basados en patrones
+  public abstract Object visitMatchExpression(MatchExpression ast, Object o);
 
   // Declarations
   public abstract Object visitBinaryOperatorDeclaration(BinaryOperatorDeclaration ast, Object o);
