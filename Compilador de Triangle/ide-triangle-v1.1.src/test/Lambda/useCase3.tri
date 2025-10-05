@@ -1,0 +1,9 @@
+let
+ func duplicar(func f(Integer): Integer) ~ f(2) * 2,
+ var miFuncion: lambda(Integer): Integer
+in
+begin
+ var n:= 5;
+ miFuncion:= lambdaQ(x: Integer): Integer ~ x + 5;
+ duplicar(miFuncion(n))
+ end
