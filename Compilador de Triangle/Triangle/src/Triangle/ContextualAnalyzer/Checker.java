@@ -305,7 +305,7 @@ public final class Checker implements Visitor {
     return ast.type;
   }
 
-  public Object visitFunExpression(Triangle.AbstractSyntaxTrees.FunExpression ast, Object o) {
+  public Object visitLambdaExpression(Triangle.AbstractSyntaxTrees.LambdaExpression ast, Object o) {
     // Type-check anonymous function: open scope, declare formals, check body
     ast.T = (TypeDenoter) ast.T.visit(this, null);
     idTable.openScope();
@@ -314,7 +314,7 @@ public final class Checker implements Visitor {
     idTable.closeScope();
     if (! ast.T.equals(eType))
       reporter.reportError ("body of function has wrong type", "", ast.E.position);
-    ast.type = new Triangle.AbstractSyntaxTrees.FunTypeDenoter(ast.FPS, ast.T, ast.position);
+    ast.type = new Triangle.AbstractSyntaxTrees.LambdaTypeDenoter(ast.FPS, ast.T, ast.position);
     return ast.type;
   }
 
@@ -507,15 +507,15 @@ public final class Checker implements Visitor {
                               ast.E.position);
 
     // If the formal expects a function value, accept an anonymous
-    // function expression whose visited type is a FunTypeDenoter.
+    // function expression whose visited type is a LambdaTypeDenoter.
     } else if (fp instanceof FuncFormalParameter) {
-      if (eType instanceof Triangle.AbstractSyntaxTrees.FunTypeDenoter) {
-        Triangle.AbstractSyntaxTrees.FunTypeDenoter ft = (Triangle.AbstractSyntaxTrees.FunTypeDenoter) eType;
+      if (eType instanceof Triangle.AbstractSyntaxTrees.LambdaTypeDenoter) {
+        Triangle.AbstractSyntaxTrees.LambdaTypeDenoter lt = (Triangle.AbstractSyntaxTrees.LambdaTypeDenoter) eType;
         FuncFormalParameter ffp = (FuncFormalParameter) fp;
-        if (! ft.FPS.equals(ffp.FPS))
+        if (! lt.FPS.equals(ffp.FPS))
           reporter.reportError ("wrong signature for function", "",
                                 ast.position);
-        else if (! ft.T.equals(ffp.T))
+        else if (! lt.T.equals(ffp.T))
           reporter.reportError ("wrong type for function", "",
                                 ast.position);
       } else {
@@ -694,7 +694,7 @@ public final class Checker implements Visitor {
     return ast;
   }
 
-  public Object visitFunTypeDenoter(Triangle.AbstractSyntaxTrees.FunTypeDenoter ast, Object o) {
+  public Object visitLambdaTypeDenoter(Triangle.AbstractSyntaxTrees.LambdaTypeDenoter ast, Object o) {
     ast.T = (TypeDenoter) ast.T.visit(this, null);
     // FormalParameterSequence types may need checking but we keep as-is
     return ast;

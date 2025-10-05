@@ -6,6 +6,6 @@ let
 in
 begin
   a := 0;
-  callWithTen(fun (const x: Integer) : Integer is x * 2, var a);
+  callWithTen(lambda (const x: Integer) : Integer is x * 2, var a);
   putint(a)
 end

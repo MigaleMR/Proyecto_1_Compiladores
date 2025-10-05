@@ -62,9 +62,9 @@ final class Token extends Object {
     END			= 11,
     FOR		= 12, //FOR command
     FUNC		= 13,
-    FUN		= 14,
-    IF			= 15,
-    IN			= 16,
+    IF			= 14,
+    IN			= 15,
+    LAMBDA  = 16, // Lambda expression
     LET			= 17,
     MATCH		= 18, // MATCH
     OF			= 19,
@@ -114,9 +114,9 @@ final class Token extends Object {
     "end",
     "for", //FOR command
     "func",
-    "fun",
     "if",
     "in",
+    "lambda", // lambda
     "let",
     "match", // match
     "of",

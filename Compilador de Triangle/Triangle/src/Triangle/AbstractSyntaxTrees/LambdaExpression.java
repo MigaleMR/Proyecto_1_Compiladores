@@ -7,9 +7,9 @@ package Triangle.AbstractSyntaxTrees;
 
 import Triangle.SyntacticAnalyzer.SourcePosition;
 
-public class FunExpression extends Expression {
+public class LambdaExpression extends Expression {
 
-  public FunExpression (FormalParameterSequence fpsAST, TypeDenoter tAST, Expression eAST, SourcePosition thePosition) {
+  public LambdaExpression (FormalParameterSequence fpsAST, TypeDenoter tAST, Expression eAST, SourcePosition thePosition) {
     super(thePosition);
     FPS = fpsAST;
     T = tAST;
@@ -17,7 +17,7 @@ public class FunExpression extends Expression {
   }
 
   public Object visit(Visitor v, Object o) {
-    return v.visitFunExpression(this, o);
+    return v.visitLambdaExpression(this, o);
   }
 
   public FormalParameterSequence FPS;

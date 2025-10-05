@@ -7,22 +7,22 @@ package Triangle.AbstractSyntaxTrees;
 
 import Triangle.SyntacticAnalyzer.SourcePosition;
 
-public class FunTypeDenoter extends TypeDenoter {
+public class LambdaTypeDenoter extends TypeDenoter {
 
-  public FunTypeDenoter (FormalParameterSequence fpsAST, TypeDenoter tAST, SourcePosition thePosition) {
+  public LambdaTypeDenoter (FormalParameterSequence fpsAST, TypeDenoter tAST, SourcePosition thePosition) {
     super(thePosition);
     FPS = fpsAST;
     T = tAST;
   }
 
   public Object visit(Visitor v, Object o) {
-    return v.visitFunTypeDenoter(this, o);
+    return v.visitLambdaTypeDenoter(this, o);
   }
 
   public boolean equals(Object obj) {
     if (obj != null && obj instanceof ErrorTypeDenoter) return true;
-    if (obj != null && obj instanceof FunTypeDenoter) {
-      FunTypeDenoter f = (FunTypeDenoter) obj;
+    if (obj != null && obj instanceof LambdaTypeDenoter) {
+      LambdaTypeDenoter f = (LambdaTypeDenoter) obj;
       return this.FPS.equals(f.FPS) && this.T.equals(f.T);
     }
     return false;

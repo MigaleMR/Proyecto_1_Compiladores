@@ -59,6 +59,8 @@ import Triangle.AbstractSyntaxTrees.IfExpression;
 import Triangle.AbstractSyntaxTrees.IntTypeDenoter;
 import Triangle.AbstractSyntaxTrees.IntegerExpression;
 import Triangle.AbstractSyntaxTrees.IntegerLiteral;
+import Triangle.AbstractSyntaxTrees.LambdaExpression; //Lambda expression
+import Triangle.AbstractSyntaxTrees.LambdaTypeDenoter; //Lambda type denoter
 import Triangle.AbstractSyntaxTrees.LetCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
 import Triangle.AbstractSyntaxTrees.MatchCommand;
@@ -102,7 +104,6 @@ import java.util.List;
 import java.util.Map;
 
 public final class Encoder implements Visitor {
-
 
   // Commands
   public Object visitAssignCommand(AssignCommand ast, Object o) {
@@ -355,8 +356,8 @@ public final class Encoder implements Visitor {
     encodeFetch(ast.V, frame, valSize.intValue());
     return valSize;
   }
-  
-    public Object visitFunExpression(Triangle.AbstractSyntaxTrees.FunExpression ast, Object o) {
+
+    public Object visitLambdaExpression(LambdaExpression ast, Object o) {
       Frame frame = (Frame) o;
 
 
@@ -784,7 +785,7 @@ public final class Encoder implements Visitor {
     return new Integer(fieldSize);
   }
 
-  public Object visitFunTypeDenoter(Triangle.AbstractSyntaxTrees.FunTypeDenoter ast, Object o) {
+  public Object visitLambdaTypeDenoter(LambdaTypeDenoter ast, Object o) {
     // Represent function values as closures of fixed size
     return new Integer(Machine.closureSize);
   }

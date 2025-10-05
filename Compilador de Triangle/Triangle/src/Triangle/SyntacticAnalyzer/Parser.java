@@ -14,11 +14,10 @@
 
 package Triangle.SyntacticAnalyzer;
 
-import java.util.LinkedHashMap;
-
-import Triangle.ErrorReporter;
 import Triangle.AbstractSyntaxTrees.*;
+import Triangle.ErrorReporter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class Parser {
@@ -552,7 +551,7 @@ public class Parser {
       accept(Token.RPAREN);
       break;
 
-    case Token.FUN:
+    case Token.LAMBDA:
       {
         acceptIt();
         accept(Token.LPAREN);
@@ -563,7 +562,7 @@ public class Parser {
         accept(Token.IS); // ~
         Expression eAST = parseExpression();
         finish(expressionPos);
-        expressionAST = new Triangle.AbstractSyntaxTrees.FunExpression(fpsAST, tAST, eAST, expressionPos);
+        expressionAST = new LambdaExpression(fpsAST, tAST, eAST, expressionPos);
       }
       break;
 
@@ -1003,7 +1002,7 @@ public class Parser {
       }
       break;
 
-    case Token.FUN:
+    case Token.LAMBDA:
       {
         acceptIt();
         accept(Token.LPAREN);
@@ -1012,7 +1011,7 @@ public class Parser {
         accept(Token.COLON);
         TypeDenoter tAST = parseTypeDenoter();
         finish(typePos);
-        typeAST = new FunTypeDenoter(fpsAST, tAST, typePos);
+        typeAST = new LambdaTypeDenoter(fpsAST, tAST, typePos);
       }
       break;
 
