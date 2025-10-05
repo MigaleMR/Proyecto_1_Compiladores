@@ -232,6 +232,7 @@ public class Parser {
       }
       break;
 
+
     case Token.BEGIN:
       acceptIt();
       commandAST = parseCommand();
@@ -549,6 +550,21 @@ public class Parser {
       acceptIt();
       expressionAST = parseExpression();
       accept(Token.RPAREN);
+      break;
+
+    case Token.FUN:
+      {
+        acceptIt();
+        accept(Token.LPAREN);
+        FormalParameterSequence fpsAST = parseFormalParameterSequence();
+        accept(Token.RPAREN);
+        accept(Token.COLON);
+        TypeDenoter tAST = parseTypeDenoter();
+        accept(Token.IS); // ~
+        Expression eAST = parseExpression();
+        finish(expressionPos);
+        expressionAST = new Triangle.AbstractSyntaxTrees.FunExpression(fpsAST, tAST, eAST, expressionPos);
+      }
       break;
 
     default:
@@ -984,6 +1000,19 @@ public class Parser {
         accept(Token.END);
         finish(typePos);
         typeAST = new RecordTypeDenoter(fAST, typePos);
+      }
+      break;
+
+    case Token.FUN:
+      {
+        acceptIt();
+        accept(Token.LPAREN);
+        FormalParameterSequence fpsAST = parseFormalParameterSequence();
+        accept(Token.RPAREN);
+        accept(Token.COLON);
+        TypeDenoter tAST = parseTypeDenoter();
+        finish(typePos);
+        typeAST = new FunTypeDenoter(fpsAST, tAST, typePos);
       }
       break;
 

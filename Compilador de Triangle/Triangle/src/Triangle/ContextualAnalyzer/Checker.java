@@ -305,6 +305,19 @@ public final class Checker implements Visitor {
     return ast.type;
   }
 
+  public Object visitFunExpression(Triangle.AbstractSyntaxTrees.FunExpression ast, Object o) {
+    // Type-check anonymous function: open scope, declare formals, check body
+    ast.T = (TypeDenoter) ast.T.visit(this, null);
+    idTable.openScope();
+    ast.FPS.visit(this, null);
+    TypeDenoter eType = (TypeDenoter) ast.E.visit(this, null);
+    idTable.closeScope();
+    if (! ast.T.equals(eType))
+      reporter.reportError ("body of function has wrong type", "", ast.E.position);
+    ast.type = new Triangle.AbstractSyntaxTrees.FunTypeDenoter(ast.FPS, ast.T, ast.position);
+    return ast.type;
+  }
+
   // Declarations
 
   // Always returns null. Does not use the given object.
@@ -487,13 +500,33 @@ public final class Checker implements Visitor {
   public Object visitConstActualParameter(ConstActualParameter ast, Object o) {
     FormalParameter fp = (FormalParameter) o;
     TypeDenoter eType = (TypeDenoter) ast.E.visit(this, null);
+    // Ordinary const actual parameter
+    if (fp instanceof ConstFormalParameter) {
+      if (! eType.equals(((ConstFormalParameter) fp).T))
+        reporter.reportError ("wrong type for const actual parameter", "",
+                              ast.E.position);
 
-    if (! (fp instanceof ConstFormalParameter))
+    // If the formal expects a function value, accept an anonymous
+    // function expression whose visited type is a FunTypeDenoter.
+    } else if (fp instanceof FuncFormalParameter) {
+      if (eType instanceof Triangle.AbstractSyntaxTrees.FunTypeDenoter) {
+        Triangle.AbstractSyntaxTrees.FunTypeDenoter ft = (Triangle.AbstractSyntaxTrees.FunTypeDenoter) eType;
+        FuncFormalParameter ffp = (FuncFormalParameter) fp;
+        if (! ft.FPS.equals(ffp.FPS))
+          reporter.reportError ("wrong signature for function", "",
+                                ast.position);
+        else if (! ft.T.equals(ffp.T))
+          reporter.reportError ("wrong type for function", "",
+                                ast.position);
+      } else {
+        reporter.reportError ("func actual parameter not expected here", "",
+                              ast.position);
+      }
+
+    } else {
       reporter.reportError ("const actual parameter not expected here", "",
                             ast.position);
-    else if (! eType.equals(((ConstFormalParameter) fp).T))
-      reporter.reportError ("wrong type for const actual parameter", "",
-                            ast.E.position);
+    }
     return null;
   }
 
@@ -658,6 +691,12 @@ public final class Checker implements Visitor {
 
   public Object visitSingleFieldTypeDenoter(SingleFieldTypeDenoter ast, Object o) {
     ast.T = (TypeDenoter) ast.T.visit(this, null);
+    return ast;
+  }
+
+  public Object visitFunTypeDenoter(Triangle.AbstractSyntaxTrees.FunTypeDenoter ast, Object o) {
+    ast.T = (TypeDenoter) ast.T.visit(this, null);
+    // FormalParameterSequence types may need checking but we keep as-is
     return ast;
   }
 

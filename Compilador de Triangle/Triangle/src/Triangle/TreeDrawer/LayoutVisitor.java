@@ -84,6 +84,8 @@ import Triangle.AbstractSyntaxTrees.VarFormalParameter;
 import Triangle.AbstractSyntaxTrees.Visitor;
 import Triangle.AbstractSyntaxTrees.VnameExpression;
 import Triangle.AbstractSyntaxTrees.WhileCommand;
+import Triangle.AbstractSyntaxTrees.FunExpression;
+import Triangle.AbstractSyntaxTrees.FunTypeDenoter;
 
 public class LayoutVisitor implements Visitor {
 
@@ -183,6 +185,10 @@ public class LayoutVisitor implements Visitor {
 
   public Object visitVnameExpression(VnameExpression ast, Object obj) {
     return layoutUnary("VnameExpr.", ast.V);
+  }
+
+  public Object visitFunExpression(FunExpression ast, Object obj) {
+    return layoutTernary("FunExpr.", ast.FPS, ast.T, ast.E);
   }
 
   // Expresión Match - Layout para visualización del árbol sintáctico de la expresión match
@@ -346,6 +352,10 @@ public class LayoutVisitor implements Visitor {
 
   public Object visitSingleFieldTypeDenoter(SingleFieldTypeDenoter ast, Object obj) {
     return layoutBinary("Sing.F.TypeD.", ast.I, ast.T);
+  }
+
+  public Object visitFunTypeDenoter(FunTypeDenoter ast, Object obj) {
+    return layoutBinary("Fun.TypeD.", ast.FPS, ast.T);
   }
 
 

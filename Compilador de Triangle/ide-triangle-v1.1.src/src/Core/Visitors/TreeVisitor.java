@@ -74,6 +74,8 @@ import Triangle.AbstractSyntaxTrees.VarFormalParameter;
 import Triangle.AbstractSyntaxTrees.Visitor;
 import Triangle.AbstractSyntaxTrees.VnameExpression;
 import Triangle.AbstractSyntaxTrees.WhileCommand;
+import Triangle.AbstractSyntaxTrees.FunExpression;
+import Triangle.AbstractSyntaxTrees.FunTypeDenoter;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
@@ -195,6 +197,10 @@ public class TreeVisitor implements Visitor {
     
     public Object visitVnameExpression(VnameExpression ast, Object obj) {
         return(createUnary("Vname Expression", ast.V));
+    }
+
+    public Object visitFunExpression(FunExpression ast, Object obj) {
+        return(createTernary("Fun Expression", ast.FPS, ast.T, ast.E));
     }
     
     // Expresión Match - Crea un nodo de árbol que muestra la expresión principal y todos los casos con sus expresiones

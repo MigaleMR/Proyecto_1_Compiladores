@@ -632,6 +632,19 @@ public class TableVisitor implements Visitor {
   
       return(null);
   }
+  
+  public Object visitFunExpression(Triangle.AbstractSyntaxTrees.FunExpression ast, Object o) {
+      ast.FPS.visit(this, null);
+      ast.T.visit(this, null);
+      ast.E.visit(this, null);
+      return(null);
+  }
+
+  public Object visitFunTypeDenoter(Triangle.AbstractSyntaxTrees.FunTypeDenoter ast, Object o) {
+      ast.FPS.visit(this, null);
+      ast.T.visit(this, null);
+      return(null);
+  }
   // </editor-fold>
 
   // <editor-fold defaultstate="collapsed" desc=" Table Creation Methods ">

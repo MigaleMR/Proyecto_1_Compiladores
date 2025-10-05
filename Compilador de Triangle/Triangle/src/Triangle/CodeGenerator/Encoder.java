@@ -355,6 +355,13 @@ public final class Encoder implements Visitor {
     encodeFetch(ast.V, frame, valSize.intValue());
     return valSize;
   }
+  
+    public Object visitFunExpression(Triangle.AbstractSyntaxTrees.FunExpression ast, Object o) {
+      // Runtime code generation for anonymous functions (closures) is non-trivial.
+      // Placeholder: report unsupported and return size 0.
+      reporter.reportError("code generation for anonymous functions not implemented", "", ast.position);
+      return new Integer(0);
+    }
 
   // Expresión Match - Genera código que compara la expresión principal con cada caso
   // y evalúa la expresión correspondiente al caso que coincida
@@ -751,6 +758,11 @@ public final class Encoder implements Visitor {
       fieldSize = ast.entity.size;
 
     return new Integer(fieldSize);
+  }
+
+  public Object visitFunTypeDenoter(Triangle.AbstractSyntaxTrees.FunTypeDenoter ast, Object o) {
+    // Represent function values as closures of fixed size
+    return new Integer(Machine.closureSize);
   }
 
 

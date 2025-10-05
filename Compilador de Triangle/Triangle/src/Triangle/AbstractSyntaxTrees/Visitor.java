@@ -45,6 +45,8 @@ public interface Visitor {
   public abstract Object visitVnameExpression(VnameExpression ast, Object o);
   // Expresión Match - Expresión condicional que evalúa diferentes casos basados en patrones
   public abstract Object visitMatchExpression(MatchExpression ast, Object o);
+  // Anonymous function expression (fun ...)
+  public abstract Object visitFunExpression(FunExpression ast, Object o);
 
   // Declarations
   public abstract Object visitBinaryOperatorDeclaration(BinaryOperatorDeclaration ast, Object o);
@@ -96,6 +98,9 @@ public interface Visitor {
 
   public abstract Object visitMultipleFieldTypeDenoter(MultipleFieldTypeDenoter ast, Object o);
   public abstract Object visitSingleFieldTypeDenoter(SingleFieldTypeDenoter ast, Object o);
+
+  // Function Type Denoter
+  public abstract Object visitFunTypeDenoter(FunTypeDenoter ast, Object o);
 
   // Literals, Identifiers and Operators
   public abstract Object visitCharacterLiteral(CharacterLiteral ast, Object o);

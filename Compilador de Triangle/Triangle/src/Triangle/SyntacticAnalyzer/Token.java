@@ -1,19 +1,4 @@
-/*
- * @(#)Token.java                        2.1 2003/10/07
- *
- * Copyright (C) 1999, 2003 D.A. Watt and D.F. Brown
- * Dept. of Computing Science, University of Glasgow, Glasgow G12 8QQ Scotland
- * and School of Computer and Math Sciences, The Robert Gordon University,
- * St. Andrew Street, Aberdeen AB25 1HG, Scotland.
- * All rights reserved.
- *
- * This software is provided free for educational use only. It may
- * not be used for commercial purposes without the prior written permission
- * of the authors.
- */
-
 package Triangle.SyntacticAnalyzer;
-
 
 final class Token extends Object {
 
@@ -69,49 +54,50 @@ final class Token extends Object {
     // reserved words - must be in alphabetical order...
     ARRAY		= 4,
     BEGIN		= 5,
-    CASE                = 6, // CASE
+    CASE		= 6, // CASE
     CONST		= 7,
     DO			= 8,
-    DOWNTO              = 9, //Part of FOR command
+    DOWNTO		= 9, //Part of FOR command
     ELSE		= 10,
     END			= 11,
-    FOR                 = 12, //FOR command
+    FOR		= 12, //FOR command
     FUNC		= 13,
-    IF			= 14,
-    IN			= 15,
-    LET			= 16,
-    MATCH               = 17, // MATCH     
-    OF			= 18, 
-    OTHERWISE           = 19, //OTHERWISE
-    PROC		= 20,
-    RECORD		= 21,
-    REPEAT              = 22, //Repeat command
-    THEN		= 23,
-    TO                  = 24, //Part of FOR command
-    TYPE		= 25,
-    UNTIL               = 26, //Part of REPEAT command
-    VAR			= 27,
-    WHILE		= 28,
+    FUN		= 14,
+    IF			= 15,
+    IN			= 16,
+    LET			= 17,
+    MATCH		= 18, // MATCH
+    OF			= 19,
+    OTHERWISE	= 20, //OTHERWISE
+    PROC		= 21,
+    RECORD		= 22,
+    REPEAT		= 23, //Repeat command
+    THEN		= 24,
+    TO			= 25, //Part of FOR command
+    TYPE		= 26,
+    UNTIL		= 27, //Part of REPEAT command
+    VAR		= 28,
+    WHILE		= 29,
 
     // punctuation...
-    DOT			= 29,
-    COLON		= 30,
-    SEMICOLON	= 31,
-    COMMA		= 32,
-    BECOMES		= 33,
-    IS			= 34,
+    DOT			= 30,
+    COLON			= 31,
+    SEMICOLON	= 32,
+    COMMA		= 33,
+    BECOMES		= 34,
+    IS			= 35,
 
     // brackets...
-    LPAREN		= 35,
-    RPAREN		= 36,
-    LBRACKET	= 37,
-    RBRACKET	= 38,
-    LCURLY		= 39,
-    RCURLY		= 40,
+    LPAREN		= 36,
+    RPAREN		= 37,
+    LBRACKET	= 38,
+    RBRACKET	= 39,
+    LCURLY		= 40,
+    RCURLY		= 41,
 
     // special tokens...
-    EOT			= 41,
-    ERROR		= 42;
+    EOT			= 42,
+    ERROR		= 43;
 
   private static String[] tokenTable = new String[] {
     "<int>",
@@ -128,6 +114,7 @@ final class Token extends Object {
     "end",
     "for", //FOR command
     "func",
+    "fun",
     "if",
     "in",
     "let",
@@ -161,5 +148,4 @@ final class Token extends Object {
 
   private final static int	firstReservedWord = Token.ARRAY,
                   lastReservedWord  = Token.WHILE;
-
 }
