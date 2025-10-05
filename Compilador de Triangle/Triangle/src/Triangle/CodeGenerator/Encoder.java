@@ -357,10 +357,34 @@ public final class Encoder implements Visitor {
   }
   
     public Object visitFunExpression(Triangle.AbstractSyntaxTrees.FunExpression ast, Object o) {
-      // Runtime code generation for anonymous functions (closures) is non-trivial.
-      // Placeholder: report unsupported and return size 0.
-      reporter.reportError("code generation for anonymous functions not implemented", "", ast.position);
-      return new Integer(0);
+      Frame frame = (Frame) o;
+
+
+      emit(Machine.LOADAop, 0, displayRegister(frame.level, frame.level), 0);
+      int loadCodeInstrAddr = nextInstrAddr;
+      emit(Machine.LOADAop, 0, Machine.CBr, 0);
+
+      int jumpAddr = nextInstrAddr;
+      emit(Machine.JUMPop, 0, Machine.CBr, 0);
+
+
+      int bodyStart = nextInstrAddr;
+
+      ast.entity = new KnownRoutine(Machine.closureSize, frame.level, bodyStart);
+
+      if (frame.level == Machine.maxRoutineLevel) {reporter.reportRestriction("can't nest routines more than " + Machine.maxRoutineLevel + " deep");} else {
+  
+        Frame frame1 = new Frame(frame.level + 1, 0);
+        int argsSize = ((Integer) ast.FPS.visit(this, frame1)).intValue();
+        Frame frame2 = new Frame(frame.level + 1, Machine.linkDataSize);
+        int valSize = ((Integer) ast.E.visit(this, frame2)).intValue();
+        emit(Machine.RETURNop, valSize, 0, argsSize);
+      }
+
+      patch(jumpAddr, nextInstrAddr);
+      patch(loadCodeInstrAddr, bodyStart);
+
+      return new Integer(Machine.closureSize);
     }
 
   // Expresión Match - Genera código que compara la expresión principal con cada caso

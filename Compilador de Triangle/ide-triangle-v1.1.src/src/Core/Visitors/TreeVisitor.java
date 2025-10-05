@@ -376,6 +376,10 @@ public class TreeVisitor implements Visitor {
     public Object visitSingleFieldTypeDenoter(SingleFieldTypeDenoter ast, Object obj) {
         return(createBinary("Single Field Type Denoter", ast.I, ast.T));
     }
+
+    public Object visitFunTypeDenoter(FunTypeDenoter ast, Object obj) {
+        return(createBinary("Fun Type Denoter", ast.FPS, ast.T));
+    }
     // </editor-fold>
     
     // <editor-fold defaultstate="collapsed" desc=" Literals, Identifiers and Operators ">

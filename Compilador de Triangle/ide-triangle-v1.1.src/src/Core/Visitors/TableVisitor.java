@@ -71,6 +71,10 @@ import Triangle.AbstractSyntaxTrees.UnaryOperatorDeclaration;
 import Triangle.AbstractSyntaxTrees.VarActualParameter;
 import Triangle.AbstractSyntaxTrees.VarDeclaration;
 import Triangle.AbstractSyntaxTrees.VarFormalParameter;
+import Triangle.AbstractSyntaxTrees.FunExpression;
+import Triangle.AbstractSyntaxTrees.FunTypeDenoter;
+import Triangle.AbstractSyntaxTrees.FormalParameterSequence;
+import Triangle.AbstractSyntaxTrees.TypeDenoter;
 import Triangle.AbstractSyntaxTrees.Visitor;
 import Triangle.AbstractSyntaxTrees.VnameExpression;
 import Triangle.AbstractSyntaxTrees.WhileCommand;
@@ -633,14 +637,14 @@ public class TableVisitor implements Visitor {
       return(null);
   }
   
-  public Object visitFunExpression(Triangle.AbstractSyntaxTrees.FunExpression ast, Object o) {
+  public Object visitFunExpression(FunExpression ast, Object o) {
       ast.FPS.visit(this, null);
       ast.T.visit(this, null);
       ast.E.visit(this, null);
       return(null);
   }
 
-  public Object visitFunTypeDenoter(Triangle.AbstractSyntaxTrees.FunTypeDenoter ast, Object o) {
+  public Object visitFunTypeDenoter(FunTypeDenoter ast, Object o) {
       ast.FPS.visit(this, null);
       ast.T.visit(this, null);
       return(null);
