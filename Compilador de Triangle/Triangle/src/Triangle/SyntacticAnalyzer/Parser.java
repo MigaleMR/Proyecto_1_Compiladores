@@ -1053,33 +1053,41 @@ public class Parser {
       }
       break;
 
+    /*
+     * There are two syntaxes for lambda type denoters:
+     * 1) lambda(<formal-parameter-sequence>) : Type
+     *    where formal parameters have names: e.g. (const x: Integer, var y: Integer)
+     * 2) lambda(<type-list>) : Type
+     *    shorthand with only types: e.g. (Integer, Integer)
+     * It'll detect which case by peeking: if we see an IDENTIFIER followed by COLON,
+     * treat as (1). Otherwise parse as a list of TypeDenoter and convert to
+     * a FormalParameterSequence of ConstFormalParameter with synthetic names.
+     */
+
     case Token.LAMBDA:
       {
         acceptIt();
         accept(Token.LPAREN);
-        // We support two syntaxes for lambda type denoters:
-        // 1) lambda(<formal-parameter-sequence>) : Type
-        //    where formal parameters have names: e.g. (const x: Integer, var y: Integer)
-        // 2) lambda(<type-list>) : Type
-        //    shorthand with only types: e.g. (Integer, Integer)
-        // We'll detect which case by peeking: if we see an IDENTIFIER followed by COLON,
-        // treat as (1). Otherwise parse as a list of TypeDenoter and convert to
-        // a FormalParameterSequence of ConstFormalParameter with synthetic names.
         FormalParameterSequence fpsAST;
-        // ensure there is at least one token after LPAREN
+
+        // Ensure there is at least one token after LPAREN
         if (currentToken.kind == Token.RPAREN) {
-          // empty parameter sequence
+          
+          // Empty parameter sequence
           fpsAST = new EmptyFormalParameterSequence(typePos);
         } else {
+          
           // Peek to see if this looks like a named formal parameter (IDENTIFIER followed by COLON)
           boolean looksLikeNamed = false;
+          
           // A named formal parameter can start with an identifier, or with
           // the modifiers/keywords CONST, VAR, PROC or FUNC. Detect those
           // cases so we don't misinterpret them as a shorthand type-list.
           switch (currentToken.kind) {
             case Token.IDENTIFIER:
-              // need to peek next token to see if it's a ':' after the id
-              Token next = peek(1); // safe: ensureLookahead inside peek
+              
+              // Need to peek next token to see if it's a ':' after the id
+              Token next = peek(1);
               if (next != null && next.kind == Token.COLON) looksLikeNamed = true;
               break;
             case Token.VAR:
@@ -1094,9 +1102,10 @@ public class Parser {
           if (looksLikeNamed) {
             fpsAST = parseFormalParameterSequence();
           } else {
-            // parsing shorthand lambda type-list (no debug print)
-            // parse a comma-separated list of TypeDenoter
-            // build a FormalParameterSequence from these types
+            
+            // Parsing shorthand lambda type-list (no debug print)
+            // Parse a comma-separated list of TypeDenoter
+            // Build a FormalParameterSequence from these types
             java.util.List<TypeDenoter> types = new java.util.ArrayList<>();
             TypeDenoter td = parseTypeDenoter();
             types.add(td);
@@ -1105,12 +1114,15 @@ public class Parser {
               td = parseTypeDenoter();
               types.add(td);
             }
-            // convert types -> FormalParameterSequence of ConstFormalParameter with synthetic ids
-            // create a chain of MultipleFormalParameterSequence / SingleFormalParameterSequence
+            
+            // Convert types -> FormalParameterSequence of ConstFormalParameter with synthetic ids
+            // Create a chain of MultipleFormalParameterSequence / SingleFormalParameterSequence
             FormalParameterSequence chain = null;
-            // we'll construct from last to first
+            
+            // It'll construct from last to first
             for (int i = types.size() - 1; i >= 0; i--) {
-              // synthetic identifier name
+              
+              // Synthetic identifier name
               String synthName = "_p" + i;
               Identifier id = new Identifier(synthName, previousTokenPosition);
               ConstFormalParameter cfp = new ConstFormalParameter(id, types.get(i), previousTokenPosition);
