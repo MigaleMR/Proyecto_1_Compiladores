@@ -1,0 +1,35 @@
+Parser.java
+Agregó un pequeño buffer de lookahead (helpers como ensureLookahead / peek y 
+la cuenta lookaheadCount) para poder mirar hasta 2 tokens sin consumirlos y 
+así desambiguar formas parecidas de la gramática. Se usó eso para: (1) distinguir 
+entre la "lista corta" de tipos en lambdas (p. ej. lambda(Integer,Integer): Integer) 
+y la forma de parámetros nombrados (const x: Integer), y cuando detecto la forma c
+orta sintetizo una FormalParameterSequence compuesta por ConstFormalParameter 
+con identificadores generados (_p0, _p1, ...); (2) aceptar const como inicio v
+álido de un FormalParameter; (3) añadir func(...) : T como TypeDenoter 
+(se crea un LambdaTypeDenoter) para permitir declarar parámetros de tipo función. 
+
+Razonamiento: así el resto del compilador (Checker, Encoder) sigue recibiendo 
+la estructura AST que ya conoce y los casos de test de lambdas/funciones de orden 
+superior compilan sin tocar mucho el backend.
+
+
+Funcionamiento de Token.Lambda
+Lectura de caracteres → Scanner
+1.  El Scanner.scan() llama internamente a scanToken(). Cuando encuentra una secuencia 
+    de letras/dígitos comienza a construir un identificador (o palabra). 
+    scanToken() devuelve inicialmente Token.IDENTIFIER junto con el spelling 
+    (por ejemplo "lambda").
+
+2.  Construcción del objeto Token → new Token(kind, spelling, position)
+    El constructor de Token tiene una rama especial: si kind == Token.IDENTIFIER 
+    entonces hace una búsqueda en tokenTable entre firstReservedWord y lastReservedWord. 
+    Si encuentra una entrada en tokenTable que coincide con spelling (por ejemplo "lambda"), 
+    entonces cambia this.kind a la constante reservada correspondiente (p. ej. Token.LAMBDA).
+    Por eso las palabras reservadas aparecen en tokenTable y deben estar en el rango 
+    firstReservedWord..lastReservedWord con la misma ordenación/índices que las 
+    constantes Token.<NOMBRE>.
+
+3.  Resultado en el parser
+    El parser recibe un Token cuyo kind ya será Token.
+    LAMBDA cuando el texto contenga la palabra lambda.

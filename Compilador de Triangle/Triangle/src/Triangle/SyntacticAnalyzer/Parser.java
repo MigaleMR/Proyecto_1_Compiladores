@@ -26,6 +26,9 @@ public class Parser {
   private ErrorReporter errorReporter;
   private Token currentToken;
   private SourcePosition previousTokenPosition;
+  // simple lookahead buffer (supports up to 2-token lookahead)
+  private Token[] lookaheadBuffer = new Token[2];
+  private int lookaheadCount = 0;
 
   public Parser(Scanner lexer, ErrorReporter reporter) {
     lexicalAnalyser = lexer;
@@ -40,7 +43,16 @@ public class Parser {
   void accept (int tokenExpected) throws SyntaxError {
     if (currentToken.kind == tokenExpected) {
       previousTokenPosition = currentToken.position;
-      currentToken = lexicalAnalyser.scan();
+      // advance using lookahead buffer if present
+      if (lookaheadCount > 0) {
+        currentToken = lookaheadBuffer[0];
+        // shift buffer
+        if (lookaheadCount == 2) lookaheadBuffer[0] = lookaheadBuffer[1];
+        lookaheadCount--;
+        if (lookaheadCount < 0) lookaheadCount = 0;
+      } else {
+        currentToken = lexicalAnalyser.scan();
+      }
     } else {
       syntacticError("\"%\" expected here", Token.spell(tokenExpected));
     }
@@ -48,7 +60,35 @@ public class Parser {
 
   void acceptIt() {
     previousTokenPosition = currentToken.position;
-    currentToken = lexicalAnalyser.scan();
+    if (lookaheadCount > 0) {
+      currentToken = lookaheadBuffer[0];
+      if (lookaheadCount == 2) lookaheadBuffer[0] = lookaheadBuffer[1];
+      lookaheadCount--;
+      if (lookaheadCount < 0) lookaheadCount = 0;
+    } else {
+      currentToken = lexicalAnalyser.scan();
+    }
+  }
+
+  // Ensure there are at least n tokens in the lookahead buffer (n >= 1 && n <= 2)
+  private void ensureLookahead(int n) {
+    try {
+      while (lookaheadCount < n) {
+        Token t = lexicalAnalyser.scan();
+        if (lookaheadCount == 0) lookaheadBuffer[0] = t;
+        else lookaheadBuffer[1] = t;
+        lookaheadCount++;
+      }
+    } catch (Exception e) {
+      // scanner shouldn't throw here in normal usage
+    }
+  }
+
+  // Peek the i-th lookahead token without consuming (1-based)
+  private Token peek(int i) {
+    if (i < 1 || i > 2) return null;
+    ensureLookahead(i);
+    return lookaheadBuffer[i-1];
   }
 
 // start records the position of the start of a phrase.
@@ -115,7 +155,7 @@ public class Parser {
       previousTokenPosition = currentToken.position;
       String spelling = currentToken.spelling;
       IL = new IntegerLiteral(spelling, previousTokenPosition);
-      currentToken = lexicalAnalyser.scan();
+      acceptIt();
     } else {
       IL = null;
       syntacticError("integer literal expected here", "");
@@ -133,7 +173,7 @@ public class Parser {
       previousTokenPosition = currentToken.position;
       String spelling = currentToken.spelling;
       CL = new CharacterLiteral(spelling, previousTokenPosition);
-      currentToken = lexicalAnalyser.scan();
+      acceptIt();
     } else {
       CL = null;
       syntacticError("character literal expected here", "");
@@ -151,7 +191,7 @@ public class Parser {
       previousTokenPosition = currentToken.position;
       String spelling = currentToken.spelling;
       I = new Identifier(spelling, previousTokenPosition);
-      currentToken = lexicalAnalyser.scan();
+      acceptIt();
     } else {
       I = null;
       syntacticError("identifier expected here", "");
@@ -169,7 +209,7 @@ public class Parser {
       previousTokenPosition = currentToken.position;
       String spelling = currentToken.spelling;
       O = new Operator(spelling, previousTokenPosition);
-      currentToken = lexicalAnalyser.scan();
+      acceptIt();
     } else {
       O = null;
       syntacticError("operator expected here", "");
@@ -815,6 +855,17 @@ public class Parser {
       }
       break;
 
+    case Token.CONST:
+      {
+        acceptIt();
+        Identifier iAST = parseIdentifier();
+        accept(Token.COLON);
+        TypeDenoter tAST = parseTypeDenoter();
+        finish(formalPos);
+        formalAST = new ConstFormalParameter(iAST, tAST, formalPos);
+      }
+      break;
+
     case Token.VAR:
       {
         acceptIt();
@@ -1006,12 +1057,91 @@ public class Parser {
       {
         acceptIt();
         accept(Token.LPAREN);
-        FormalParameterSequence fpsAST = parseFormalParameterSequence();
+        // We support two syntaxes for lambda type denoters:
+        // 1) lambda(<formal-parameter-sequence>) : Type
+        //    where formal parameters have names: e.g. (const x: Integer, var y: Integer)
+        // 2) lambda(<type-list>) : Type
+        //    shorthand with only types: e.g. (Integer, Integer)
+        // We'll detect which case by peeking: if we see an IDENTIFIER followed by COLON,
+        // treat as (1). Otherwise parse as a list of TypeDenoter and convert to
+        // a FormalParameterSequence of ConstFormalParameter with synthetic names.
+        FormalParameterSequence fpsAST;
+        // ensure there is at least one token after LPAREN
+        if (currentToken.kind == Token.RPAREN) {
+          // empty parameter sequence
+          fpsAST = new EmptyFormalParameterSequence(typePos);
+        } else {
+          // Peek to see if this looks like a named formal parameter (IDENTIFIER followed by COLON)
+          boolean looksLikeNamed = false;
+          // A named formal parameter can start with an identifier, or with
+          // the modifiers/keywords CONST, VAR, PROC or FUNC. Detect those
+          // cases so we don't misinterpret them as a shorthand type-list.
+          switch (currentToken.kind) {
+            case Token.IDENTIFIER:
+              // need to peek next token to see if it's a ':' after the id
+              Token next = peek(1); // safe: ensureLookahead inside peek
+              if (next != null && next.kind == Token.COLON) looksLikeNamed = true;
+              break;
+            case Token.VAR:
+            case Token.CONST:
+            case Token.PROC:
+            case Token.FUNC:
+              looksLikeNamed = true;
+              break;
+            default:
+              looksLikeNamed = false;
+          }
+          if (looksLikeNamed) {
+            fpsAST = parseFormalParameterSequence();
+          } else {
+            // parsing shorthand lambda type-list (no debug print)
+            // parse a comma-separated list of TypeDenoter
+            // build a FormalParameterSequence from these types
+            java.util.List<TypeDenoter> types = new java.util.ArrayList<>();
+            TypeDenoter td = parseTypeDenoter();
+            types.add(td);
+            while (currentToken.kind == Token.COMMA) {
+              acceptIt();
+              td = parseTypeDenoter();
+              types.add(td);
+            }
+            // convert types -> FormalParameterSequence of ConstFormalParameter with synthetic ids
+            // create a chain of MultipleFormalParameterSequence / SingleFormalParameterSequence
+            FormalParameterSequence chain = null;
+            // we'll construct from last to first
+            for (int i = types.size() - 1; i >= 0; i--) {
+              // synthetic identifier name
+              String synthName = "_p" + i;
+              Identifier id = new Identifier(synthName, previousTokenPosition);
+              ConstFormalParameter cfp = new ConstFormalParameter(id, types.get(i), previousTokenPosition);
+              if (chain == null) {
+                chain = new SingleFormalParameterSequence(cfp, previousTokenPosition);
+              } else {
+                chain = new MultipleFormalParameterSequence(cfp, chain, previousTokenPosition);
+              }
+            }
+            fpsAST = chain;
+          }
+        }
         accept(Token.RPAREN);
         accept(Token.COLON);
         TypeDenoter tAST = parseTypeDenoter();
         finish(typePos);
         typeAST = new LambdaTypeDenoter(fpsAST, tAST, typePos);
+      }
+      break;
+
+    case Token.FUNC:
+      {
+        // func type denoter: func (formal-parameter-sequence) : Type
+        acceptIt();
+        accept(Token.LPAREN);
+        FormalParameterSequence fpsAST2 = parseFormalParameterSequence();
+        accept(Token.RPAREN);
+        accept(Token.COLON);
+        TypeDenoter tAST2 = parseTypeDenoter();
+        finish(typePos);
+        typeAST = new LambdaTypeDenoter(fpsAST2, tAST2, typePos);
       }
       break;
 

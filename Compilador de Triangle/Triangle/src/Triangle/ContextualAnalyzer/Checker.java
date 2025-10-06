@@ -31,6 +31,7 @@ public final class Checker implements Visitor {
   public Object visitAssignCommand(AssignCommand ast, Object o) {
     TypeDenoter vType = (TypeDenoter) ast.V.visit(this, null);
     TypeDenoter eType = (TypeDenoter) ast.E.visit(this, null);
+  // debug prints removed
     if (!ast.V.variable)
       reporter.reportError ("LHS of assignment is not a variable", "", ast.V.position);
     if (! eType.equals(vType))
@@ -189,6 +190,7 @@ public final class Checker implements Visitor {
 
   public Object visitCallExpression(CallExpression ast, Object o) {
     Declaration binding = (Declaration) ast.I.visit(this, null);
+  // debug prints removed
     if (binding == null) {
       reportUndeclared(ast.I);
       ast.type = StdEnvironment.errorType;
@@ -198,9 +200,30 @@ public final class Checker implements Visitor {
     } else if (binding instanceof FuncFormalParameter) {
       ast.APS.visit(this, ((FuncFormalParameter) binding).FPS);
       ast.type = ((FuncFormalParameter) binding).T;
-    } else
-      reporter.reportError("\"%\" is not a function identifier",
-                           ast.I.spelling, ast.I.position);
+    } else {
+      // Support calling a variable/constant that holds a function value (lambda)
+      TypeDenoter bindingType = null;
+      if (binding instanceof VarDeclaration) {
+        bindingType = ((VarDeclaration) binding).T;
+      } else if (binding instanceof ConstDeclaration) {
+        // const declaration stores its value in E; use its evaluated type if available
+        if (((ConstDeclaration) binding).E != null)
+          bindingType = ((ConstDeclaration) binding).E.type;
+      } else if (binding instanceof ConstFormalParameter) {
+        bindingType = ((ConstFormalParameter) binding).T;
+      } else if (binding instanceof VarFormalParameter) {
+        bindingType = ((VarFormalParameter) binding).T;
+      }
+      if (bindingType instanceof Triangle.AbstractSyntaxTrees.LambdaTypeDenoter) {
+        Triangle.AbstractSyntaxTrees.LambdaTypeDenoter lt = (Triangle.AbstractSyntaxTrees.LambdaTypeDenoter) bindingType;
+        ast.APS.visit(this, lt.FPS);
+        ast.type = lt.T;
+      } else {
+        reporter.reportError("\"%\" is not a function identifier",
+                             ast.I.spelling, ast.I.position);
+        ast.type = StdEnvironment.errorType;
+      }
+    }
     return ast.type;
   }
 
@@ -210,7 +233,8 @@ public final class Checker implements Visitor {
   }
 
   public Object visitEmptyExpression(EmptyExpression ast, Object o) {
-    ast.type = null;
+    // Empty expressions are represented as error type to avoid nulls
+    ast.type = StdEnvironment.errorType;
     return ast.type;
   }
 
@@ -500,6 +524,12 @@ public final class Checker implements Visitor {
   public Object visitConstActualParameter(ConstActualParameter ast, Object o) {
     FormalParameter fp = (FormalParameter) o;
     TypeDenoter eType = (TypeDenoter) ast.E.visit(this, null);
+  // debug prints removed
+    if (eType == null) {
+      // Treat unknown/empty expressions as error type to continue checking
+      eType = StdEnvironment.errorType;
+      ast.E.type = eType;
+    }
     // Ordinary const actual parameter
     if (fp instanceof ConstFormalParameter) {
       if (! eType.equals(((ConstFormalParameter) fp).T))
@@ -696,8 +726,43 @@ public final class Checker implements Visitor {
 
   public Object visitLambdaTypeDenoter(Triangle.AbstractSyntaxTrees.LambdaTypeDenoter ast, Object o) {
     ast.T = (TypeDenoter) ast.T.visit(this, null);
-    // FormalParameterSequence types may need checking but we keep as-is
+    // Ensure the types inside the FormalParameterSequence are expanded
+    resolveFormalParameterTypes(ast.FPS);
     return ast;
+  }
+
+  // Resolve type denoters inside a FormalParameterSequence without
+  // entering any identifiers into the identification table.
+  private void resolveFormalParameterTypes(FormalParameterSequence fps) {
+    if (fps instanceof EmptyFormalParameterSequence) return;
+    if (fps instanceof SingleFormalParameterSequence) {
+      resolveFormalParameter(((SingleFormalParameterSequence) fps).FP);
+    } else if (fps instanceof MultipleFormalParameterSequence) {
+      resolveFormalParameter(((MultipleFormalParameterSequence) fps).FP);
+      resolveFormalParameterTypes(((MultipleFormalParameterSequence) fps).FPS);
+    }
+  }
+
+  private void resolveFormalParameter(FormalParameter fp) {
+    if (fp instanceof ConstFormalParameter) {
+      ConstFormalParameter cfp = (ConstFormalParameter) fp;
+      if (cfp.T != null)
+        cfp.T = (TypeDenoter) cfp.T.visit(this, null);
+    } else if (fp instanceof VarFormalParameter) {
+      VarFormalParameter vfp = (VarFormalParameter) fp;
+      if (vfp.T != null)
+        vfp.T = (TypeDenoter) vfp.T.visit(this, null);
+    } else if (fp instanceof FuncFormalParameter) {
+      FuncFormalParameter ffp = (FuncFormalParameter) fp;
+      // Resolve result type
+      if (ffp.T != null)
+        ffp.T = (TypeDenoter) ffp.T.visit(this, null);
+      // Resolve nested FPS
+      resolveFormalParameterTypes(ffp.FPS);
+    } else if (fp instanceof ProcFormalParameter) {
+      ProcFormalParameter pfp = (ProcFormalParameter) fp;
+      resolveFormalParameterTypes(pfp.FPS);
+    }
   }
 
   // Literals, Identifiers and Operators

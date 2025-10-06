@@ -2,13 +2,13 @@
 let
   var n: Integer;
   var inc: lambda (const x: Integer) : Integer;
-  proc applyTwice(f: func (const x: Integer) : Integer, var a: Integer) is
+  proc applyTwice(f: func (const x: Integer) : Integer, var a: Integer) ~
     a := f(f(a))
   
 in
 begin
   n := 5;
-  inc := lambda (const x: Integer) : Integer is x + 1;
+  inc := lambda (const x: Integer) : Integer ~ x + 1;
   applyTwice(inc, var n);
   putint(n)
 end
