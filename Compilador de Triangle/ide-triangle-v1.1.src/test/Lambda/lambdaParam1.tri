@@ -1,0 +1,11 @@
+let
+  const aplicar ~ lambda (func f (const x: Integer) : Integer, var y: Integer) : Integer ~
+    f(y);
+  func doble (x: Integer) : Integer ~
+    x * 2;
+  var n: Integer
+in
+  begin
+    n := 5;
+    putint(aplicar(func doble, var n));
+  end

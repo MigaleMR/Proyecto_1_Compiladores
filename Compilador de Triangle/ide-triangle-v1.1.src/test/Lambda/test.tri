@@ -1,0 +1,9 @@
+let
+  func doble (Integer): Integer ~
+    x * 2;
+  var x: Integer
+in
+  begin
+    var := 2;
+    putint(doble(2));
+  end

@@ -1,0 +1,12 @@
+let
+  const doBoth ~ lambda (proc p (const x: Integer), func g (const x: Integer) : Integer) : Integer ~
+    begin
+      p(10);
+      g(10)
+    end;
+  proc printN (const x: Integer) ~
+    putint(x);
+  func addOne (x: Integer) : Integer ~
+    x + 1
+in
+  doBoth(proc printN, func addOne);

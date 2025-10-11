@@ -1,0 +1,8 @@
+let
+  const applyLambda ~ lambda (f: func (Integer) : Integer, x: Integer) : Integer ~
+    f(x);
+in
+  begin 
+    const result1 ~ applyLambda(lambda (const y: Integer) : Integer ~ y * 2, 5);
+    putint(result1);
+  end

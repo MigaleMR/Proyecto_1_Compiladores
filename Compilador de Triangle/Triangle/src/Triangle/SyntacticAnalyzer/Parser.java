@@ -1068,73 +1068,7 @@ public class Parser {
       {
         acceptIt();
         accept(Token.LPAREN);
-        FormalParameterSequence fpsAST;
-
-        // Ensure there is at least one token after LPAREN
-        if (currentToken.kind == Token.RPAREN) {
-          
-          // Empty parameter sequence
-          fpsAST = new EmptyFormalParameterSequence(typePos);
-        } else {
-          
-          // Peek to see if this looks like a named formal parameter (IDENTIFIER followed by COLON)
-          boolean looksLikeNamed = false;
-          
-          // A named formal parameter can start with an identifier, or with
-          // the modifiers/keywords CONST, VAR, PROC or FUNC. Detect those
-          // cases so we don't misinterpret them as a shorthand type-list.
-          switch (currentToken.kind) {
-            case Token.IDENTIFIER:
-              
-              // Need to peek next token to see if it's a ':' after the id
-              Token next = peek(1);
-              if (next != null && next.kind == Token.COLON) looksLikeNamed = true;
-              break;
-            case Token.VAR:
-            case Token.CONST:
-            case Token.PROC:
-            case Token.FUNC:
-              looksLikeNamed = true;
-              break;
-            default:
-              looksLikeNamed = false;
-          }
-          if (looksLikeNamed) {
-            fpsAST = parseFormalParameterSequence();
-          } else {
-            
-            // Parsing shorthand lambda type-list (no debug print)
-            // Parse a comma-separated list of TypeDenoter
-            // Build a FormalParameterSequence from these types
-            java.util.List<TypeDenoter> types = new java.util.ArrayList<>();
-            TypeDenoter td = parseTypeDenoter();
-            types.add(td);
-            while (currentToken.kind == Token.COMMA) {
-              acceptIt();
-              td = parseTypeDenoter();
-              types.add(td);
-            }
-            
-            // Convert types -> FormalParameterSequence of ConstFormalParameter with synthetic ids
-            // Create a chain of MultipleFormalParameterSequence / SingleFormalParameterSequence
-            FormalParameterSequence chain = null;
-            
-            // It'll construct from last to first
-            for (int i = types.size() - 1; i >= 0; i--) {
-              
-              // Synthetic identifier name
-              String synthName = "_p" + i;
-              Identifier id = new Identifier(synthName, previousTokenPosition);
-              ConstFormalParameter cfp = new ConstFormalParameter(id, types.get(i), previousTokenPosition);
-              if (chain == null) {
-                chain = new SingleFormalParameterSequence(cfp, previousTokenPosition);
-              } else {
-                chain = new MultipleFormalParameterSequence(cfp, chain, previousTokenPosition);
-              }
-            }
-            fpsAST = chain;
-          }
-        }
+        FormalParameterSequence fpsAST = parseFormalParameterSequence();
         accept(Token.RPAREN);
         accept(Token.COLON);
         TypeDenoter tAST = parseTypeDenoter();
