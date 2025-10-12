@@ -360,14 +360,12 @@ public final class Encoder implements Visitor {
     public Object visitLambdaExpression(LambdaExpression ast, Object o) {
       Frame frame = (Frame) o;
 
-
       emit(Machine.LOADAop, 0, displayRegister(frame.level, frame.level), 0);
       int loadCodeInstrAddr = nextInstrAddr;
       emit(Machine.LOADAop, 0, Machine.CBr, 0);
 
       int jumpAddr = nextInstrAddr;
       emit(Machine.JUMPop, 0, Machine.CBr, 0);
-
 
       int bodyStart = nextInstrAddr;
 

@@ -906,7 +906,6 @@ public class Parser {
     start(actualPos);
 
     switch (currentToken.kind) {
-
     case Token.IDENTIFIER:
     case Token.INTLITERAL:
     case Token.CHARLITERAL:
@@ -916,6 +915,7 @@ public class Parser {
     case Token.LPAREN:
     case Token.LBRACKET:
     case Token.LCURLY:
+    case Token.LAMBDA:
       {
         Expression eAST = parseExpression();
         finish(actualPos);

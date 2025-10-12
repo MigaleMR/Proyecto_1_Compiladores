@@ -1,0 +1,18 @@
+let
+  func doble(x: Integer): Integer ~ x * 2;
+  func aplicarFunc(func f (x: Integer): Integer, v: Integer): Integer ~
+    f(v);
+  func aplicarLambda(g: lambda(x: Integer): Integer, v: Integer): Integer ~
+    g(v);
+  
+  const r1 ~ aplicarFunc(doble, 5);
+  const r2 ~ aplicarLambda(lambda (x: Integer): Integer ~ x * 2, 5);
+  const r3 ~ aplicarLambda(doble, 6);
+  const r4 ~ aplicarFunc(lambda (x: Integer): Integer ~ x * 2, 7)
+in
+  begin
+    putint(r1);
+    putint(r2);
+    putint(r3);
+    putint(r4)
+  end
