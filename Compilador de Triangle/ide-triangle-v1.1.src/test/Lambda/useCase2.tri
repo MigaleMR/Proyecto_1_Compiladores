@@ -14,5 +14,6 @@ in
    y:= 2;
    f:= lambda(a: Integer, b: Integer, c: Integer): Integer
      ~ max(a, b, c);
-   putint(f(x, y, 3))
+   putint(f(x, y, 3));
+   putint(max(x, y, 3))
  end
