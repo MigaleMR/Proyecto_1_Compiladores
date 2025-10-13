@@ -1,0 +1,11 @@
+let
+  func aplicar (func f (x: Integer) : Integer, x: Integer): Integer ~
+    f(x);
+
+  const resultado1 ~ aplicar(lambda (x: Integer): Integer ~ x * 2, 5);
+  const resultado2 ~ aplicar(lambda (x: Integer): Integer ~ x * x, 5)
+in
+  begin
+    putint(resultado1);
+    putint(resultado2);
+  end

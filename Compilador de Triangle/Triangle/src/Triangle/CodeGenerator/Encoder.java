@@ -59,6 +59,8 @@ import Triangle.AbstractSyntaxTrees.IfExpression;
 import Triangle.AbstractSyntaxTrees.IntTypeDenoter;
 import Triangle.AbstractSyntaxTrees.IntegerExpression;
 import Triangle.AbstractSyntaxTrees.IntegerLiteral;
+import Triangle.AbstractSyntaxTrees.LambdaExpression; //Lambda expression
+import Triangle.AbstractSyntaxTrees.LambdaTypeDenoter; //Lambda type denoter
 import Triangle.AbstractSyntaxTrees.LetCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
 import Triangle.AbstractSyntaxTrees.MatchCommand;
@@ -102,7 +104,6 @@ import java.util.List;
 import java.util.Map;
 
 public final class Encoder implements Visitor {
-
 
   // Commands
   public Object visitAssignCommand(AssignCommand ast, Object o) {
@@ -284,7 +285,51 @@ public final class Encoder implements Visitor {
     Frame frame = (Frame) o;
     Integer valSize = (Integer) ast.type.visit(this, null);
     Integer argsSize = (Integer) ast.APS.visit(this, frame);
-    ast.I.visit(this, new Frame(frame.level, argsSize));
+
+    // Determinar el tipo de entidad y generar la invocación apropiada
+    Declaration binding = (Declaration) ast.I.decl;
+    if (binding != null && binding.entity != null) {
+      RuntimeEntity ent = binding.entity;
+      if (ent instanceof KnownRoutine) {
+        ObjectAddress address = ((KnownRoutine) ent).address;
+        // llamada directa a rutina conocida
+        emit(Machine.CALLop, displayRegister(frame.level, address.level), Machine.CBr, address.displacement);
+      } else if (ent instanceof UnknownRoutine) {
+        ObjectAddress address = ((UnknownRoutine) ent).address;
+        // cargar closure y llamada indirecta
+        emit(Machine.LOADop, Machine.closureSize, displayRegister(frame.level, address.level), address.displacement);
+        emit(Machine.CALLIop, 0, 0, 0);
+      } else if (ent instanceof PrimitiveRoutine) {
+        int displacement = ((PrimitiveRoutine) ent).displacement;
+        emit(Machine.CALLop, Machine.SBr, Machine.PBr, displacement);
+      } else if (ent instanceof EqualityRoutine) {
+        int displacement = ((EqualityRoutine) ent).displacement;
+        emit(Machine.LOADLop, 0, 0, frame.size / 2);
+        emit(Machine.CALLop, Machine.SBr, Machine.PBr, displacement);
+      } else if (ent instanceof KnownAddress) {
+        // Variable que contiene un closure (lambda) almacenado en memoria
+        ObjectAddress address = ((KnownAddress) ent).address;
+        emit(Machine.LOADop, Machine.closureSize, displayRegister(frame.level, address.level), address.displacement);
+        emit(Machine.CALLIop, 0, 0, 0);
+      } else if (ent instanceof UnknownValue) {
+        // Param formal const que contiene un closure
+        ObjectAddress address = ((UnknownValue) ent).address;
+        emit(Machine.LOADop, Machine.closureSize, displayRegister(frame.level, address.level), address.displacement);
+        emit(Machine.CALLIop, 0, 0, 0);
+      } else if (ent instanceof UnknownAddress) {
+        // Parámetro var que apunta a un closure; desreferenciar la dirección y cargar el closure
+        ObjectAddress address = ((UnknownAddress) ent).address;
+        emit(Machine.LOADop, Machine.addressSize, displayRegister(frame.level, address.level), address.displacement);
+        emit(Machine.LOADIop, Machine.closureSize, 0, 0);
+        emit(Machine.CALLIop, 0, 0, 0);
+      } else {
+        // Fallback: intentar comportamiento anterior (por compatibilidad)
+        ast.I.visit(this, new Frame(frame.level, argsSize));
+      }
+    } else {
+      // Si no hay binding o entidad, mantener el comportamiento previo
+      ast.I.visit(this, new Frame(frame.level, argsSize));
+    }
     return valSize;
   }
 
@@ -355,6 +400,35 @@ public final class Encoder implements Visitor {
     encodeFetch(ast.V, frame, valSize.intValue());
     return valSize;
   }
+
+    public Object visitLambdaExpression(LambdaExpression ast, Object o) {
+      Frame frame = (Frame) o;
+
+      emit(Machine.LOADAop, 0, displayRegister(frame.level, frame.level), 0);
+      int loadCodeInstrAddr = nextInstrAddr;
+      emit(Machine.LOADAop, 0, Machine.CBr, 0);
+
+      int jumpAddr = nextInstrAddr;
+      emit(Machine.JUMPop, 0, Machine.CBr, 0);
+
+      int bodyStart = nextInstrAddr;
+
+      ast.entity = new KnownRoutine(Machine.closureSize, frame.level, bodyStart);
+
+      if (frame.level == Machine.maxRoutineLevel) {reporter.reportRestriction("can't nest routines more than " + Machine.maxRoutineLevel + " deep");} else {
+  
+        Frame frame1 = new Frame(frame.level + 1, 0);
+        int argsSize = ((Integer) ast.FPS.visit(this, frame1)).intValue();
+        Frame frame2 = new Frame(frame.level + 1, Machine.linkDataSize);
+        int valSize = ((Integer) ast.E.visit(this, frame2)).intValue();
+        emit(Machine.RETURNop, valSize, 0, argsSize);
+      }
+
+      patch(jumpAddr, nextInstrAddr);
+      patch(loadCodeInstrAddr, bodyStart);
+
+      return new Integer(Machine.closureSize);
+    }
 
   // Expresión Match - Genera código que compara la expresión principal con cada caso
   // y evalúa la expresión correspondiente al caso que coincida
@@ -751,6 +825,11 @@ public final class Encoder implements Visitor {
       fieldSize = ast.entity.size;
 
     return new Integer(fieldSize);
+  }
+
+  public Object visitLambdaTypeDenoter(LambdaTypeDenoter ast, Object o) {
+    // Represent function values as closures of fixed size
+    return new Integer(Machine.closureSize);
   }
 
 

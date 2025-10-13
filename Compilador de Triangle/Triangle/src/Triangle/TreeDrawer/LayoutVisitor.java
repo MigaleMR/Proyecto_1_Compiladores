@@ -14,8 +14,6 @@
 
 package Triangle.TreeDrawer;
 
-import java.awt.FontMetrics;
-
 import Triangle.AbstractSyntaxTrees.AST;
 import Triangle.AbstractSyntaxTrees.AnyTypeDenoter;
 import Triangle.AbstractSyntaxTrees.ArrayExpression;
@@ -48,8 +46,12 @@ import Triangle.AbstractSyntaxTrees.IfExpression;
 import Triangle.AbstractSyntaxTrees.IntTypeDenoter;
 import Triangle.AbstractSyntaxTrees.IntegerExpression;
 import Triangle.AbstractSyntaxTrees.IntegerLiteral;
+import Triangle.AbstractSyntaxTrees.LambdaExpression;
+import Triangle.AbstractSyntaxTrees.LambdaTypeDenoter;
 import Triangle.AbstractSyntaxTrees.LetCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
+import Triangle.AbstractSyntaxTrees.MatchCommand;
+import Triangle.AbstractSyntaxTrees.MatchExpression;
 import Triangle.AbstractSyntaxTrees.MultipleActualParameterSequence;
 import Triangle.AbstractSyntaxTrees.MultipleArrayAggregate;
 import Triangle.AbstractSyntaxTrees.MultipleFieldTypeDenoter;
@@ -61,10 +63,8 @@ import Triangle.AbstractSyntaxTrees.ProcDeclaration;
 import Triangle.AbstractSyntaxTrees.ProcFormalParameter;
 import Triangle.AbstractSyntaxTrees.Program;
 import Triangle.AbstractSyntaxTrees.RecordExpression;
-import Triangle.AbstractSyntaxTrees.RepeatCommand;
-import Triangle.AbstractSyntaxTrees.MatchCommand;
-import Triangle.AbstractSyntaxTrees.MatchExpression;
 import Triangle.AbstractSyntaxTrees.RecordTypeDenoter;
+import Triangle.AbstractSyntaxTrees.RepeatCommand;
 import Triangle.AbstractSyntaxTrees.SequentialCommand;
 import Triangle.AbstractSyntaxTrees.SequentialDeclaration;
 import Triangle.AbstractSyntaxTrees.SimpleTypeDenoter;
@@ -84,6 +84,7 @@ import Triangle.AbstractSyntaxTrees.VarFormalParameter;
 import Triangle.AbstractSyntaxTrees.Visitor;
 import Triangle.AbstractSyntaxTrees.VnameExpression;
 import Triangle.AbstractSyntaxTrees.WhileCommand;
+import java.awt.FontMetrics;
 
 public class LayoutVisitor implements Visitor {
 
@@ -183,6 +184,10 @@ public class LayoutVisitor implements Visitor {
 
   public Object visitVnameExpression(VnameExpression ast, Object obj) {
     return layoutUnary("VnameExpr.", ast.V);
+  }
+  // Expression Lambda - Layout that visualizes the syntax tree of the lambda expression
+  public Object visitLambdaExpression(LambdaExpression ast, Object obj) {
+    return layoutTernary("LambdaExpr.", ast.FPS, ast.T, ast.E);
   }
 
   // Expresión Match - Layout para visualización del árbol sintáctico de la expresión match
@@ -346,6 +351,11 @@ public class LayoutVisitor implements Visitor {
 
   public Object visitSingleFieldTypeDenoter(SingleFieldTypeDenoter ast, Object obj) {
     return layoutBinary("Sing.F.TypeD.", ast.I, ast.T);
+  }
+
+  // Type Denoter Lambda - Layout that visualizes the syntax tree of the lambda type denoter
+  public Object visitLambdaTypeDenoter(LambdaTypeDenoter ast, Object obj) {
+    return layoutBinary("Lambda.TypeD.", ast.FPS, ast.T);
   }
 
 

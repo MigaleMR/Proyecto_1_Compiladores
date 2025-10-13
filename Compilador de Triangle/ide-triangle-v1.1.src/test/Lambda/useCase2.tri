@@ -1,0 +1,19 @@
+let
+ var x: Integer;
+ var y: Integer;
+ var f: lambda(a: Integer, b: Integer, c: Integer): Integer;
+
+ func max(x: Integer, y: Integer, z: Integer): Integer ~
+   if x >= y then
+     if x >= z then x else z
+   else
+     if y >= z then y else z
+in
+ begin
+   x:= 5;
+   y:= 2;
+   f:= lambda(a: Integer, b: Integer, c: Integer): Integer
+     ~ max(a, b, c);
+   putint(f(x, y, 3));
+   putint(max(x, y, 3))
+ end

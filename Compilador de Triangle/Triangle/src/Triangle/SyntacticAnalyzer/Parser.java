@@ -14,11 +14,10 @@
 
 package Triangle.SyntacticAnalyzer;
 
-import java.util.LinkedHashMap;
-
-import Triangle.ErrorReporter;
 import Triangle.AbstractSyntaxTrees.*;
+import Triangle.ErrorReporter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class Parser {
@@ -231,6 +230,7 @@ public class Parser {
         }
       }
       break;
+
 
     case Token.BEGIN:
       acceptIt();
@@ -549,6 +549,23 @@ public class Parser {
       acceptIt();
       expressionAST = parseExpression();
       accept(Token.RPAREN);
+      break;
+
+    case Token.LAMBDA:
+      {
+        acceptIt();
+        accept(Token.LPAREN);
+        // Extensión: en expresiones lambda, permitir lista de tipos sin nombres
+        // o la forma tradicional con parámetros con nombre.
+        FormalParameterSequence fpsAST = parseLambdaParameterSequenceForExpression();
+        accept(Token.RPAREN);
+        accept(Token.COLON);
+        TypeDenoter tAST = parseTypeDenoter();
+        accept(Token.IS); // ~
+        Expression eAST = parseExpression();
+        finish(expressionPos);
+        expressionAST = new LambdaExpression(fpsAST, tAST, eAST, expressionPos);
+      }
       break;
 
     default:
@@ -891,7 +908,6 @@ public class Parser {
     start(actualPos);
 
     switch (currentToken.kind) {
-
     case Token.IDENTIFIER:
     case Token.INTLITERAL:
     case Token.CHARLITERAL:
@@ -901,6 +917,7 @@ public class Parser {
     case Token.LPAREN:
     case Token.LBRACKET:
     case Token.LCURLY:
+    case Token.LAMBDA:
       {
         Expression eAST = parseExpression();
         finish(actualPos);
@@ -987,6 +1004,23 @@ public class Parser {
       }
       break;
 
+    case Token.LAMBDA:
+      {
+        acceptIt();
+        accept(Token.LPAREN);
+        // Para tipos lambda, permitimos dentro de () tanto una lista de tipos posicionales
+        // como parámetros con nombre (x: T, y: U). En ambos casos, normalizamos a
+        // ConstFormalParameter con identificadores dummy para que los nombres no afecten
+        // la identidad del tipo.
+        FormalParameterSequence fpsAST = parseLambdaTypeParameterSequenceAllowingNames();
+        accept(Token.RPAREN);
+        accept(Token.COLON);
+        TypeDenoter tAST = parseTypeDenoter();
+        finish(typePos);
+        typeAST = new LambdaTypeDenoter(fpsAST, tAST, typePos);
+      }
+      break;
+
     default:
       syntacticError("\"%\" cannot start a type denoter",
         currentToken.spelling);
@@ -1015,5 +1049,231 @@ public class Parser {
       fieldAST = new SingleFieldTypeDenoter(iAST, tAST, fieldPos);
     }
     return fieldAST;
+  }
+
+  // Auxiliar: parsea una lista de tipos posicionales dentro de un tipo lambda
+  // Admite:  )  -> EmptyFormalParameterSequence
+  //        T               -> SingleFormalParameterSequence(ConstFormalParameter(_ : T))
+  //        T , T , ...     -> MultipleFormalParameterSequence anidada
+  // Nota: Usa identificadores dummy ya que no hay nombres de parámetros en firmas tipo.
+  private FormalParameterSequence parseLambdaTypeParameterSequenceFromTypes() throws SyntaxError {
+    SourcePosition pos = new SourcePosition();
+    start(pos);
+
+    if (currentToken.kind == Token.RPAREN) {
+      finish(pos);
+      return new EmptyFormalParameterSequence(pos);
+    }
+
+    // Recolectar tipos separados por comas
+    ArrayList<TypeDenoter> types = new ArrayList<>();
+    types.add(parseTypeDenoter());
+    while (currentToken.kind == Token.COMMA) {
+      acceptIt();
+      types.add(parseTypeDenoter());
+    }
+
+    // Construir FormalParameterSequence usando ConstFormalParameter con ID dummy
+    ArrayList<FormalParameter> params = new ArrayList<>();
+    for (TypeDenoter t : types) {
+      Identifier did = new Identifier("", t.position);
+      params.add(new ConstFormalParameter(did, t, t.position));
+    }
+
+    FormalParameterSequence seq;
+    if (params.isEmpty()) {
+      finish(pos);
+      return new EmptyFormalParameterSequence(pos);
+    } else if (params.size() == 1) {
+      seq = new SingleFormalParameterSequence(params.get(0), params.get(0).position);
+    } else {
+      // Construir de forma recursiva derecha-asociativa: p0, (p1, (p2, ...))
+      int last = params.size() - 1;
+      seq = new SingleFormalParameterSequence(params.get(last), params.get(last).position);
+      for (int i = last - 1; i >= 0; i--) {
+        seq = new MultipleFormalParameterSequence(params.get(i), seq, params.get(i).position);
+      }
+    }
+
+    finish(pos);
+    return seq;
+  }
+
+  // Auxiliar: parsea los parámetros de un TIPO lambda permitiendo nombres u omitiéndolos.
+  // Acepta:
+  //   ()
+  //   (T, U, ...)
+  //   (x: T, y: U, ...)
+  // Normaliza a ConstFormalParameter con identificadores dummy ("") para que los nombres
+  // no influyan en la igualdad de tipos.
+  private FormalParameterSequence parseLambdaTypeParameterSequenceAllowingNames() throws SyntaxError {
+    SourcePosition pos = new SourcePosition();
+    start(pos);
+
+    if (currentToken.kind == Token.RPAREN) {
+      finish(pos);
+      return new EmptyFormalParameterSequence(pos);
+    }
+
+    // Caso especial: empieza con IDENTIFIER. Puede ser un nombre de parámetro (si viene ':')
+    // o el nombre de un tipo simple.
+    if (currentToken.kind == Token.IDENTIFIER) {
+      Identifier first = parseIdentifier();
+      if (currentToken.kind == Token.COLON) {
+        // Forma con nombres: first : Type, ...
+        acceptIt(); // consume ':'
+        TypeDenoter t1 = parseTypeDenoter();
+        // Construir lista de parámetros usando dummy id
+        java.util.ArrayList<FormalParameter> params = new java.util.ArrayList<>();
+        params.add(new ConstFormalParameter(new Identifier("", t1.position), t1, t1.position));
+        while (currentToken.kind == Token.COMMA) {
+          acceptIt();
+          Identifier iname = parseIdentifier();
+          accept(Token.COLON);
+          TypeDenoter tn = parseTypeDenoter();
+          params.add(new ConstFormalParameter(new Identifier("", tn.position), tn, tn.position));
+        }
+        // Construir secuencia derecha-asociativa
+        FormalParameterSequence seq;
+        if (params.size() == 1) {
+          seq = new SingleFormalParameterSequence(params.get(0), params.get(0).position);
+        } else {
+          int last = params.size() - 1;
+          seq = new SingleFormalParameterSequence(params.get(last), params.get(last).position);
+          for (int i = last - 1; i >= 0; i--) {
+            seq = new MultipleFormalParameterSequence(params.get(i), seq, params.get(i).position);
+          }
+        }
+        finish(pos);
+        return seq;
+      } else {
+        // Forma posicional donde el primer identificador era un nombre de tipo simple
+        TypeDenoter firstType = new SimpleTypeDenoter(first, first.position);
+        java.util.ArrayList<TypeDenoter> types = new java.util.ArrayList<>();
+        types.add(firstType);
+        while (currentToken.kind == Token.COMMA) {
+          acceptIt();
+          types.add(parseTypeDenoter());
+        }
+        // Normalizar a parámetros const con id dummy
+        java.util.ArrayList<FormalParameter> params = new java.util.ArrayList<>();
+        for (TypeDenoter t : types) {
+          params.add(new ConstFormalParameter(new Identifier("", t.position), t, t.position));
+        }
+        FormalParameterSequence seq;
+        if (params.size() == 1) {
+          seq = new SingleFormalParameterSequence(params.get(0), params.get(0).position);
+        } else {
+          int last = params.size() - 1;
+          seq = new SingleFormalParameterSequence(params.get(last), params.get(last).position);
+          for (int i = last - 1; i >= 0; i--) {
+            seq = new MultipleFormalParameterSequence(params.get(i), seq, params.get(i).position);
+          }
+        }
+        finish(pos);
+        return seq;
+      }
+    }
+
+    // Forma posicional general (no comienza con IDENTIFIER o comienza con palabra clave de tipo)
+    // Reutilizamos el parser existente
+    FormalParameterSequence fps = parseLambdaTypeParameterSequenceFromTypes();
+    finish(pos);
+    return fps;
+  }
+
+  // Auxiliar: parsea los parámetros de una EXPRESIÓN lambda.
+  // Admite dos formas:
+  // 1) Forma tradicional con nombres: (x: T, y: U)
+  // 2) Forma posicional de tipos: (T, U) — genera parámetros const con nombres dummy
+  private FormalParameterSequence parseLambdaParameterSequenceForExpression() throws SyntaxError {
+    // Si viene un identificador seguido de ':' asumimos forma con nombre
+    if (currentToken.kind == Token.IDENTIFIER) {
+      // Mirar hacia adelante: tras parsear el identificador, debe venir ':' para esta forma
+      // No tenemos lookahead directo, pero parseFormalParameterSequence maneja ambas variantes
+      // siempre que haya ':' cuando corresponde. Si el usuario escribió solo tipos, el primer
+      // token será un IDENTIFIER de un tipo y no habrá ':', lo que rompería parseFormalParameter.
+      // Para distinguir, haremos un pequeño intento: si tras el IDENTIFIER viene ':' usamos la
+      // versión con nombres; de lo contrario, usaremos lista de tipos.
+      Identifier probe = parseIdentifier();
+      if (currentToken.kind == Token.COLON) {
+        // Forma con nombres: (probe: T1, iname: T2, ...)
+        acceptIt(); // consume ':'
+        TypeDenoter t1 = parseTypeDenoter();
+        java.util.ArrayList<FormalParameter> params = new java.util.ArrayList<>();
+        params.add(new ConstFormalParameter(probe, t1, t1.position));
+        while (currentToken.kind == Token.COMMA) {
+          acceptIt();
+          Identifier iname = parseIdentifier();
+          accept(Token.COLON);
+          TypeDenoter tn = parseTypeDenoter();
+          params.add(new ConstFormalParameter(iname, tn, tn.position));
+        }
+        // Construir secuencia derecha-asociativa completa
+        FormalParameterSequence seq;
+        if (params.size() == 1) {
+          seq = new SingleFormalParameterSequence(params.get(0), params.get(0).position);
+        } else {
+          int last = params.size() - 1;
+          seq = new SingleFormalParameterSequence(params.get(last), params.get(last).position);
+          for (int i = last - 1; i >= 0; i--) {
+            seq = new MultipleFormalParameterSequence(params.get(i), seq, params.get(i).position);
+          }
+        }
+        return seq;
+      } else {
+        // El primer IDENTIFIER no iba seguido de ':' — asumimos que es un nombre de tipo
+        // y parseamos como lista posicional de tipos. Debemos tratar el probe como parte del primer tipo.
+        // Para lograrlo, recreamos un SimpleTypeDenoter con el identificador ya leído.
+        SourcePosition typePos = probe.position;
+        TypeDenoter firstType = new SimpleTypeDenoter(probe, typePos);
+        java.util.ArrayList<TypeDenoter> types = new java.util.ArrayList<>();
+        types.add(firstType);
+        while (currentToken.kind == Token.COMMA) {
+          acceptIt();
+          types.add(parseTypeDenoter());
+        }
+        // Construir secuencia con IDs dummy
+        java.util.ArrayList<FormalParameter> params = new java.util.ArrayList<>();
+        for (int i = 0; i < types.size(); i++) {
+          TypeDenoter t = types.get(i);
+          String pname = (i == 0 ? "n" : ("p" + (i + 1)));
+          Identifier did = new Identifier(pname, t.position);
+          params.add(new ConstFormalParameter(did, t, t.position));
+        }
+        if (params.size() == 1)
+          return new SingleFormalParameterSequence(params.get(0), params.get(0).position);
+        FormalParameterSequence seq = new SingleFormalParameterSequence(params.get(params.size() - 1), params.get(params.size() - 1).position);
+        for (int i = params.size() - 2; i >= 0; i--) {
+          seq = new MultipleFormalParameterSequence(params.get(i), seq, params.get(i).position);
+        }
+        return seq;
+      }
+    } else if (currentToken.kind == Token.RPAREN) {
+      return new EmptyFormalParameterSequence(currentToken.position);
+    } else {
+      // Forma posicional pura comenzando con un token de tipo (ARRAY, RECORD, LAMBDA, etc.)
+      // Consumimos una lista de TypeDenoter y generamos nombres por defecto.
+      java.util.ArrayList<TypeDenoter> types = new java.util.ArrayList<>();
+      types.add(parseTypeDenoter());
+      while (currentToken.kind == Token.COMMA) {
+        acceptIt();
+        types.add(parseTypeDenoter());
+      }
+      java.util.ArrayList<FormalParameter> params = new java.util.ArrayList<>();
+      for (int i = 0; i < types.size(); i++) {
+        TypeDenoter t = types.get(i);
+        String pname = (i == 0 ? "n" : ("p" + (i + 1)));
+        Identifier did = new Identifier(pname, t.position);
+        params.add(new ConstFormalParameter(did, t, t.position));
+      }
+      if (params.size() == 1)
+        return new SingleFormalParameterSequence(params.get(0), params.get(0).position);
+      FormalParameterSequence seq = new SingleFormalParameterSequence(params.get(params.size() - 1), params.get(params.size() - 1).position);
+      for (int i = params.size() - 2; i >= 0; i--) {
+        seq = new MultipleFormalParameterSequence(params.get(i), seq, params.get(i).position);
+      }
+      return seq;
+    }
   }
 }

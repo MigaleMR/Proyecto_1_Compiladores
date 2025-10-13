@@ -38,6 +38,8 @@ import Triangle.AbstractSyntaxTrees.IfExpression;
 import Triangle.AbstractSyntaxTrees.IntTypeDenoter;
 import Triangle.AbstractSyntaxTrees.IntegerExpression;
 import Triangle.AbstractSyntaxTrees.IntegerLiteral;
+import Triangle.AbstractSyntaxTrees.LambdaExpression;
+import Triangle.AbstractSyntaxTrees.LambdaTypeDenoter;
 import Triangle.AbstractSyntaxTrees.LetCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
 import Triangle.AbstractSyntaxTrees.MatchCommand;
@@ -71,6 +73,8 @@ import Triangle.AbstractSyntaxTrees.UnaryOperatorDeclaration;
 import Triangle.AbstractSyntaxTrees.VarActualParameter;
 import Triangle.AbstractSyntaxTrees.VarDeclaration;
 import Triangle.AbstractSyntaxTrees.VarFormalParameter;
+import Triangle.AbstractSyntaxTrees.FormalParameterSequence;
+import Triangle.AbstractSyntaxTrees.TypeDenoter;
 import Triangle.AbstractSyntaxTrees.Visitor;
 import Triangle.AbstractSyntaxTrees.VnameExpression;
 import Triangle.AbstractSyntaxTrees.WhileCommand;
@@ -268,6 +272,15 @@ public class TableVisitor implements Visitor {
         ast.E2.visit(this, null);
         return null;
     } 
+    
+    // Lambda Expression - Visits the formal parameters, return type, and body of the lambda expression
+    public Object visitLambdaExpression(LambdaExpression ast, Object o) {
+      ast.FPS.visit(this, null);
+      ast.T.visit(this, null);
+      ast.E.visit(this, null);
+      return(null);
+    }
+
   // </editor-fold>
   
   // <editor-fold defaultstate="collapsed" desc=" Declarations ">
@@ -588,6 +601,13 @@ public class TableVisitor implements Visitor {
       return(null);
   }
   
+  // Lambda Type Denoter - Visits the formal parameters and return type of the lambda type
+  public Object visitLambdaTypeDenoter(LambdaTypeDenoter ast, Object o) {
+      ast.FPS.visit(this, null);
+      ast.T.visit(this, null);
+      return(null);
+  }
+
   // </editor-fold>
 
   // <editor-fold defaultstate="collapsed" desc=" Literals, Identifiers and Operators ">
@@ -632,6 +652,7 @@ public class TableVisitor implements Visitor {
   
       return(null);
   }
+
   // </editor-fold>
 
   // <editor-fold defaultstate="collapsed" desc=" Table Creation Methods ">

@@ -38,6 +38,8 @@ import Triangle.AbstractSyntaxTrees.IfExpression;
 import Triangle.AbstractSyntaxTrees.IntTypeDenoter;
 import Triangle.AbstractSyntaxTrees.IntegerExpression;
 import Triangle.AbstractSyntaxTrees.IntegerLiteral;
+import Triangle.AbstractSyntaxTrees.LambdaExpression;
+import Triangle.AbstractSyntaxTrees.LambdaTypeDenoter;
 import Triangle.AbstractSyntaxTrees.LetCommand;
 import Triangle.AbstractSyntaxTrees.LetExpression;
 import Triangle.AbstractSyntaxTrees.MatchCommand;
@@ -195,6 +197,10 @@ public class TreeVisitor implements Visitor {
     
     public Object visitVnameExpression(VnameExpression ast, Object obj) {
         return(createUnary("Vname Expression", ast.V));
+    }
+
+    public Object visitLambdaExpression(LambdaExpression ast, Object obj) {
+        return(createTernary("Lambda Expression", ast.FPS, ast.T, ast.E));
     }
     
     // Expresión Match - Crea un nodo de árbol que muestra la expresión principal y todos los casos con sus expresiones
@@ -369,6 +375,10 @@ public class TreeVisitor implements Visitor {
     
     public Object visitSingleFieldTypeDenoter(SingleFieldTypeDenoter ast, Object obj) {
         return(createBinary("Single Field Type Denoter", ast.I, ast.T));
+    }
+
+    public Object visitLambdaTypeDenoter(LambdaTypeDenoter ast, Object obj) {
+        return(createBinary("Lambda Type Denoter", ast.FPS, ast.T));
     }
     // </editor-fold>
     
