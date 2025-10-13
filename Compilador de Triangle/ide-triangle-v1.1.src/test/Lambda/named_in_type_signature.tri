@@ -1,0 +1,7 @@
+let
+  var f: lambda(x: Integer): Integer  
+in
+  begin
+    f := lambda(n: Integer): Integer ~ n * 2;
+    putint(f(5))  ! 10
+  end
