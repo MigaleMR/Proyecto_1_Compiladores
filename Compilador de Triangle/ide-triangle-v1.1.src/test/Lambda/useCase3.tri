@@ -2,7 +2,7 @@ let
   func duplicar(func f (x: Integer): Integer, y: Integer): Integer ~ 
     f(y);
 
-  var miFuncion: lambda(x: Integer): Integer;
+  var miFuncion: lambda(Integer): Integer;
   var n: Integer
 in
   begin

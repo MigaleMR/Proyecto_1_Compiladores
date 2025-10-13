@@ -285,7 +285,51 @@ public final class Encoder implements Visitor {
     Frame frame = (Frame) o;
     Integer valSize = (Integer) ast.type.visit(this, null);
     Integer argsSize = (Integer) ast.APS.visit(this, frame);
-    ast.I.visit(this, new Frame(frame.level, argsSize));
+
+    // Determinar el tipo de entidad y generar la invocación apropiada
+    Declaration binding = (Declaration) ast.I.decl;
+    if (binding != null && binding.entity != null) {
+      RuntimeEntity ent = binding.entity;
+      if (ent instanceof KnownRoutine) {
+        ObjectAddress address = ((KnownRoutine) ent).address;
+        // llamada directa a rutina conocida
+        emit(Machine.CALLop, displayRegister(frame.level, address.level), Machine.CBr, address.displacement);
+      } else if (ent instanceof UnknownRoutine) {
+        ObjectAddress address = ((UnknownRoutine) ent).address;
+        // cargar closure y llamada indirecta
+        emit(Machine.LOADop, Machine.closureSize, displayRegister(frame.level, address.level), address.displacement);
+        emit(Machine.CALLIop, 0, 0, 0);
+      } else if (ent instanceof PrimitiveRoutine) {
+        int displacement = ((PrimitiveRoutine) ent).displacement;
+        emit(Machine.CALLop, Machine.SBr, Machine.PBr, displacement);
+      } else if (ent instanceof EqualityRoutine) {
+        int displacement = ((EqualityRoutine) ent).displacement;
+        emit(Machine.LOADLop, 0, 0, frame.size / 2);
+        emit(Machine.CALLop, Machine.SBr, Machine.PBr, displacement);
+      } else if (ent instanceof KnownAddress) {
+        // Variable que contiene un closure (lambda) almacenado en memoria
+        ObjectAddress address = ((KnownAddress) ent).address;
+        emit(Machine.LOADop, Machine.closureSize, displayRegister(frame.level, address.level), address.displacement);
+        emit(Machine.CALLIop, 0, 0, 0);
+      } else if (ent instanceof UnknownValue) {
+        // Param formal const que contiene un closure
+        ObjectAddress address = ((UnknownValue) ent).address;
+        emit(Machine.LOADop, Machine.closureSize, displayRegister(frame.level, address.level), address.displacement);
+        emit(Machine.CALLIop, 0, 0, 0);
+      } else if (ent instanceof UnknownAddress) {
+        // Parámetro var que apunta a un closure; desreferenciar la dirección y cargar el closure
+        ObjectAddress address = ((UnknownAddress) ent).address;
+        emit(Machine.LOADop, Machine.addressSize, displayRegister(frame.level, address.level), address.displacement);
+        emit(Machine.LOADIop, Machine.closureSize, 0, 0);
+        emit(Machine.CALLIop, 0, 0, 0);
+      } else {
+        // Fallback: intentar comportamiento anterior (por compatibilidad)
+        ast.I.visit(this, new Frame(frame.level, argsSize));
+      }
+    } else {
+      // Si no hay binding o entidad, mantener el comportamiento previo
+      ast.I.visit(this, new Frame(frame.level, argsSize));
+    }
     return valSize;
   }
 

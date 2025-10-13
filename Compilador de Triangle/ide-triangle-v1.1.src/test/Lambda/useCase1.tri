@@ -1,4 +1,4 @@
 let
- var f: lambda(x: Integer): Integer
+ var f: lambda(Integer): Integer
 in
  f:= lambda(n: Integer): Integer ~ n * n
