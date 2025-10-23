@@ -1,0 +1,12 @@
+let
+  func duplicar(func f (x: Integer): Integer, y: Integer): Integer ~ 
+    f(y);
+
+  var miFuncion: lambda(Integer): Boolean;
+  var n: Integer
+in
+  begin
+    n:= 5;
+    miFuncion:= lambda(x: Integer): Boolean ~ x * 2;
+    putint(duplicar(miFuncion, n))
+  end

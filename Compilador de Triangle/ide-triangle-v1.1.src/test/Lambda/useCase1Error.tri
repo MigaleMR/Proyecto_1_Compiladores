@@ -1,0 +1,4 @@
+let
+ var f: lambda(Integer): Integer
+in
+ f:= lambda(n: Boolean): Integer ~ n * n
