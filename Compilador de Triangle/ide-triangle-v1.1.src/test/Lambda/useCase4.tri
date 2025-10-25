@@ -1,16 +1,27 @@
 let
- var arrayA: array 4 of Integer;
- var arrayB: array 4 of Integer;
- var i: Integer;
- var f: lambda(x: Integer): Integer
-in
- begin
-   arrayA[0]:= 1; arrayA[1]:= 2;
-   arrayA[2]:= 3; arrayA[3]:= 4;
-   f:= lambda(x: Integer): Integer ~ x * 2;
+  var i: Integer;
+  var arrayA: array 4 of Integer;
+  var f: lambda(x: Integer): Integer;
 
-   for i:= 0 to 3 do
-     arrayB[i]:= f(arrayA[i]);
-   for i:= 0 to 3 do
-     putint(arrayB[i])
- end
+  proc print(var arrayA: array 4 of Integer, var i: Integer) ~
+     begin
+       for i:= 0 to 3 do
+         putint(arrayA[i]);
+     end;
+
+  proc map(func f (x: Integer): Integer, var arrayA: array 4 of Integer, 
+           var i: Integer) ~
+     begin
+       for i:= 0 to 3 do
+         arrayA[i]:= f(arrayA[i]);
+     end
+in
+  begin
+    i := 0;
+    arrayA[0]:= 1; arrayA[1]:= 2;
+    arrayA[2]:= 3; arrayA[3]:= 4;
+    f:= lambda(x: Integer): Integer ~ x * 2;
+
+    map(f, var arrayA, var i);
+    print(var arrayA, var i)
+  end
